@@ -1,4 +1,4 @@
-namespace IosImagePicker
+namespace ImagePicker.Ios
 {
     /// <summary>
     /// Video quality settings for movies recorded with the built-in camera, or transcoded by displaying in the image picker.

@@ -1,4 +1,4 @@
-namespace IosImagePicker
+namespace ImagePicker.Ios
 {
     /// <summary>
     /// The flash mode to use with the active camera.

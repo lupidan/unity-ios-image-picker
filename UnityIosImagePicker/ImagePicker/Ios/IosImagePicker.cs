@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace IosImagePicker
+namespace ImagePicker.Ios
 {
     public class IosImagePicker : IIosImagePicker
     {

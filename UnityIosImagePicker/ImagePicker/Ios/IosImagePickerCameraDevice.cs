@@ -1,4 +1,4 @@
-namespace IosImagePicker
+namespace ImagePicker.Ios
 {
     /// <summary>
     /// The camera to use for image or movie capture.

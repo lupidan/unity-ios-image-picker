@@ -1,6 +1,6 @@
 using System;
 
-namespace IosImagePicker
+namespace ImagePicker.Ios
 {
     public interface IIosImagePicker
     {

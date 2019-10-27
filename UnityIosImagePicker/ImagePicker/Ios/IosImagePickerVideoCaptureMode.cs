@@ -1,4 +1,4 @@
-namespace IosImagePicker
+namespace ImagePicker.Ios
 {
     /// <summary>
     /// The category of media for the camera to capture.
