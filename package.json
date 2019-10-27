@@ -1,0 +1,31 @@
+{
+    "name": "com.lupidan.unity-ios-image-picker",
+    "displayName": "Unity iOS Image Picker",
+    "version": "0.1.0",
+    "unity": "2018.3",
+    "description": "Author: Daniel Lupiañez Casares\nProvides functionality on iOS to get an image or a video, from the camera or the gallery, using the native UIImagePickerController.",
+    "keywords": [
+        "apple",
+        "iphone",
+        "ios",
+        "ipad",
+        "ipados",
+        "tvos",
+        "image",
+        "picker",
+        "photo",
+        "uiimagepicker",
+        "imagepicker"
+    ],
+    "category": "Unity",
+    "files": [
+        "/LICENSE.md",
+        "/LICENSE.md.meta",
+        "/README.md",
+        "/README.md.meta",
+        "/package.json",
+        "/package.json.meta",
+        "/UnityIosImagePicker",
+        "/UnityIosImagePicker.meta"
+    ]
+}
