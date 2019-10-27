@@ -243,9 +243,9 @@ const char* UnityIosImagePickerController_GetMediaTypeImage()
     return UnityIosImagePickerController_CopyString([mediaType UTF8String]);
 }
 
-const char* UnityIosImagePickerController_GetMediaTypeVideo()
+const char* UnityIosImagePickerController_GetMediaTypeMovie()
 {
-    NSString *mediaType = (NSString *)kUTTypeVideo;
+    NSString *mediaType = (NSString *)kUTTypeMovie;
     return UnityIosImagePickerController_CopyString([mediaType UTF8String]);
 }
 

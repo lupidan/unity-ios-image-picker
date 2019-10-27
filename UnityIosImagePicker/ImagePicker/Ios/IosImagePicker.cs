@@ -62,7 +62,7 @@ namespace ImagePicker.Ios
         {
             // Get constants
             this.MediaTypeImage = PInvoke.UnityIosImagePickerController_GetMediaTypeImage();
-            this.MediaTypeMovie = PInvoke.UnityIosImagePickerController_GetMediaTypeVideo();
+            this.MediaTypeMovie = PInvoke.UnityIosImagePickerController_GetMediaTypeMovie();
             
             // Keep the same default values as UIKit
             this.SourceType = IosImagePickerSourceType.PhotoLibrary;
@@ -101,7 +101,7 @@ namespace ImagePicker.Ios
             public static extern string UnityIosImagePickerController_GetMediaTypeImage();
             
             [DllImport("__Internal")]
-            public static extern string UnityIosImagePickerController_GetMediaTypeVideo();
+            public static extern string UnityIosImagePickerController_GetMediaTypeMovie();
             
             [DllImport("__Internal")]
             public static extern bool UnityIosImagePickerController_IsSourceTypeAvailable([MarshalAs(UnmanagedType.SysInt)]IosImagePickerSourceType sourceType);
