@@ -129,17 +129,13 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
         return nil;
     }
     
-    NSURL *temporaryDirectory = [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
-    NSURL *temporaryUrl = [[NSFileManager defaultManager] URLForDirectory:NSItemReplacementDirectory
-                                                                 inDomain:NSUserDomainMask
-                                                        appropriateForURL:temporaryDirectory
-                                                                   create:YES
-                                                                    error:nil]; // TODO ERROR
-    
+    NSURL *mainTempDirectoryUrl = [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
+    NSURL *pluginTempDirectoryUrl = [mainTempDirectoryUrl URLByAppendingPathComponent:@"UnityIosImagePicker/" isDirectory:YES];
+    [[NSFileManager defaultManager] createDirectoryAtURL:pluginTempDirectoryUrl withIntermediateDirectories:YES attributes:nil error:nil];
     NSString *filename = [NSString stringWithFormat:@"%@.jpg", [[NSUUID UUID] UUIDString]];
-    NSURL *temporaryImageUrl = [temporaryUrl URLByAppendingPathComponent:filename];
-    [UIImageJPEGRepresentation(image, 1.0f) writeToURL:temporaryImageUrl atomically:YES];
-    return [temporaryUrl absoluteString];
+    NSURL *tempImageUrl = [pluginTempDirectoryUrl URLByAppendingPathComponent:filename];
+    BOOL writeSuccess = [UIImageJPEGRepresentation(image, 1.0f) writeToURL:tempImageUrl atomically:YES];
+    return writeSuccess ? [tempImageUrl absoluteString] : nil;
 }
 
 #pragma mark - UIImagePickerControllerDelegate implementation
