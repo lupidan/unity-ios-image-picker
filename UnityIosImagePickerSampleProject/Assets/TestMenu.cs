@@ -76,6 +76,7 @@ public class TestMenu : MonoBehaviour
         Debug.Log(stringBuilder.ToString());
 
         this._iosImagePicker = iosImagePicker;
+        this.UpdateTexts();
     }
 
     public void Present()
@@ -148,7 +149,7 @@ public class TestMenu : MonoBehaviour
             case IosImagePickerCameraDevice.Rear: cameraDevice = IosImagePickerCameraDevice.Front; break;
             case IosImagePickerCameraDevice.Front: cameraDevice = IosImagePickerCameraDevice.Rear; break;
         }
-
+        
         this._iosImagePicker.CameraDevice = cameraDevice;
         UpdateTexts();
     }
@@ -156,13 +157,22 @@ public class TestMenu : MonoBehaviour
     public void ChangeCameraCaptureMode()
     {
         var cameraCaptureMode = this._iosImagePicker.CameraCaptureMode;
+        var mediaTypes = this._iosImagePicker.MediaTypes;
         switch (cameraCaptureMode)
         {
-            case IosImagePickerVideoCaptureMode.Photo: cameraCaptureMode = IosImagePickerVideoCaptureMode.Video; break;
-            case IosImagePickerVideoCaptureMode.Video: cameraCaptureMode = IosImagePickerVideoCaptureMode.Photo; break;
+            case IosImagePickerVideoCaptureMode.Photo:
+                cameraCaptureMode = IosImagePickerVideoCaptureMode.Video;
+                mediaTypes = new[] { this._iosImagePicker.MediaTypeMovie };
+                break;
+            
+            case IosImagePickerVideoCaptureMode.Video:
+                cameraCaptureMode = IosImagePickerVideoCaptureMode.Photo;
+                mediaTypes = new[] { this._iosImagePicker.MediaTypeImage };
+                break;
         }
-
+        
         this._iosImagePicker.CameraCaptureMode = cameraCaptureMode;
+        this._iosImagePicker.MediaTypes = mediaTypes;
         UpdateTexts();
     }
     
