@@ -1,3 +1,5 @@
+using System;
+
 namespace IosImagePicker
 {
     public interface IIosImagePicker
@@ -8,13 +10,13 @@ namespace IosImagePicker
         /// <param name="sourceType">The source to use to pick an image or movie.</param>
         /// <returns><c>true</c> if the device supports the specified source type, <c>false</c> if the specified source type is not available.</returns>
         bool IsSourceTypeAvailable(IosImagePickerSourceType sourceType);
-        
+
         /// <summary>
         /// Returns a Boolean value that indicates whether a given camera is available.
         /// </summary>
         /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera whose availability you want to check.</param>
         /// <returns><c>true</c> if the camera indicated by cameraDevice is available, or <c>false</c> if it is not available.</returns>
-        bool IsCameraDeviceAvailable(IosImagePickerCameraDevice cameraDevice)
+        bool IsCameraDeviceAvailable(IosImagePickerCameraDevice cameraDevice);
 
         /// <summary>
         /// Returns an array of the available media types for the specified source type.
@@ -34,7 +36,7 @@ namespace IosImagePicker
         /// Indicates whether a given camera has flash illumination capability.
         /// </summary>
         /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera whose flash capability you want to know.</param>
-        /// <returns><c>true</c> if cameraDevice can use flash illumination, or <c>falsec> if it cannot.</returns>
+        /// <returns><c>true</c> if cameraDevice can use flash illumination, or <c>false</c> if it cannot.</returns>
         bool IsFlashAvailableForCameraDevice(IosImagePickerCameraDevice cameraDevice);
         
         /// <summary>
