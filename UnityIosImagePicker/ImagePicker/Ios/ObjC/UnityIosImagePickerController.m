@@ -1,18 +1,11 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "UnityIosImagePickerController.h"
 
-typedef enum
-{
-    UnityIosImagePickerControllerMediaTypeNone,
-    UnityIosImagePickerControllerMediaTypeImage,
-    UnityIosImagePickerControllerMediaTypeMovie
-} UnityIosImagePickerControllerMediaType;
-
 typedef struct
 {
     bool didCancel;
-    UnityIosImagePickerControllerMediaType type;
     CGRect cropRect;
+    const char *mediaType;
     const char *imageUrl;
     const char *originalImageFileUrl;
     const char *editedImageFileUrl;
@@ -29,7 +22,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
 
 @implementation UnityIosImagePickerController
 
-+ (instancetype) defaultHandler
++ (instancetype) defaultController
 {
     static UnityIosImagePickerController *_defaultController = nil;
     static dispatch_once_t defaultControllerInitialization;
@@ -51,40 +44,80 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     return self;
 }
 
-- (void) launchImagePickerControllerForSourceType:(UIImagePickerControllerSourceType)sourceType
+- (void) presentImagePickerControllerForRequestId:(int)requestId
+                                       sourceType:(UIImagePickerControllerSourceType)sourceType
+                                        mediaTypes:(NSArray<NSString *> *)mediaTypes
+                                    allowsEditing:(BOOL)allowsEditing
                                  videoQualityType:(UIImagePickerControllerQualityType)qualityType
+                                 maxVideoDuration:(NSTimeInterval)maxVideoDuration
+                               showCameraControls:(BOOL)showCameraControls
                                      cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode
-                                 maxVideoDuration:(NSTimeInterval)maxVideoDuration
-                                    allowsEditing:(BOOL)allowsEditing
-                               showCameraControls:(BOOL)showCameraControls
-                                    withRequestId:(int)requestId
 {
     UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
     [imagePickerController setDelegate:self];
     [imagePickerController setSourceType:sourceType];
+    [imagePickerController setMediaTypes:mediaTypes];
+    [imagePickerController setAllowsEditing:allowsEditing];
     [imagePickerController setVideoQuality:qualityType];
+    [imagePickerController setVideoMaximumDuration:maxVideoDuration];
+    [imagePickerController setShowsCameraControls:showCameraControls];
     [imagePickerController setCameraDevice:cameraDevice];
     [imagePickerController setCameraCaptureMode:cameraCaptureMode];
     [imagePickerController setCameraFlashMode:flashMode];
-    [imagePickerController setVideoMaximumDuration:maxVideoDuration];
-    [imagePickerController setAllowsEditing:allowsEditing];
-    [imagePickerController setShowsCameraControls:showCameraControls];
-    
-    
     
     NSValue *imagePickerControllerValue = [NSValue valueWithNonretainedObject:imagePickerController];
     [[self requestIdsDictionary] setObject:@(requestId) forKey:imagePickerControllerValue];
+    
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 130000
+    if (@available(iOS 8.0, *))
+    {
+        [self presentImagePickerController:imagePickerController];
+    }
+    else
+    {
+        [self legacyPresentImagePickerController:imagePickerController];
+    }
+#else
+    [self legacyPresentImagePickerController:imagePickerController];
+#endif
 }
 
-- (void) bla:(UIImagePickerControllerSourceType) sourceType withRequestId:(int)requestId withCallback:(UnityIosImagePickerControllerCallback)callback
+- (void) presentImagePickerController:(UIImagePickerController *)imagePickerController
 {
-    UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
-    [imagePickerController setDelegate:self];
-    [imagePickerController setSourceType:sourceType];
+    UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     
+    // On iPad, UIImagePickerControllerSourceTypePhotoLibrary and UIImagePickerControllerSourceTypeSavedPhotosAlbum
+    // must be presented in a popover
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad &&
+        [imagePickerController sourceType] != UIImagePickerControllerSourceTypeCamera)
+    {
+        [imagePickerController setModalPresentationStyle:UIModalPresentationPopover];
+        [[imagePickerController popoverPresentationController] setSourceRect:CGRectZero];
+        [[imagePickerController popoverPresentationController] setSourceView:[rootViewController view]];
+    } else {
+        [rootViewController setModalPresentationStyle:UIModalPresentationFullScreen];
+    }
+    
+    [rootViewController presentViewController:imagePickerController animated:YES completion:nil];
+}
 
+- (void) legacyPresentImagePickerController:(UIImagePickerController *)imagePickerController
+{
+    UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad &&
+        [imagePickerController sourceType] != UIImagePickerControllerSourceTypeCamera)
+    {
+        UIPopoverController *popoverController = [[UIPopoverController alloc] initWithContentViewController:imagePickerController];
+        [popoverController presentPopoverFromRect:CGRectZero
+                                           inView:[rootViewController view]
+                         permittedArrowDirections:UIPopoverArrowDirectionAny
+                                         animated:YES];
+    } else {
+        [rootViewController presentViewController:imagePickerController animated:YES completion:nil];
+    }
 }
 
 - (NSString *) copyImageToTempFolder:(UIImage *)image
@@ -124,18 +157,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     result.didCancel = false;
 
     NSString *mediaType = [info objectForKey:UIImagePickerControllerMediaType];
-    if ([mediaType isEqualToString:(NSString *)kUTTypeImage])
-    {
-        result.type = UnityIosImagePickerControllerMediaTypeImage;
-    }
-    else if ([mediaType isEqualToString:(NSString *)kUTTypeMovie])
-    {
-        result.type = UnityIosImagePickerControllerMediaTypeMovie;
-    }
-    else
-    {
-        result.type = UnityIosImagePickerControllerMediaTypeNone;
-    }
+    result.mediaType = UnityIosImagePickerController_CopyString([mediaType UTF8String]);
     
     NSValue *cropRectValue = [info objectForKey:UIImagePickerControllerCropRect];
     result.cropRect = cropRectValue ? [cropRectValue CGRectValue] : CGRectZero;
@@ -184,7 +206,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     
     UnityIosImagePickerControllerResult result;
     result.didCancel = true;
-    result.type = UnityIosImagePickerControllerMediaTypeNone;
+    result.mediaType = NULL;
     result.cropRect = CGRectZero;
     result.imageUrl = NULL;
     result.originalImageFileUrl = NULL;
@@ -210,6 +232,18 @@ const char* UnityIosImagePickerController_CopyString(const char* string)
     strcpy(res, string);
 
     return res;
+}
+
+const char* UnityIosImagePickerController_GetMediaTypeImage()
+{
+    NSString *mediaType = (NSString *)kUTTypeImage;
+    return UnityIosImagePickerController_CopyString([mediaType UTF8String]);
+}
+
+const char* UnityIosImagePickerController_GetMediaTypeVideo()
+{
+    NSString *mediaType = (NSString *)kUTTypeVideo;
+    return UnityIosImagePickerController_CopyString([mediaType UTF8String]);
 }
 
 bool UnityIosImagePickerController_IsSourceTypeAvailable(int sourceType)
@@ -239,4 +273,31 @@ const char* UnityIosImagePickerController_AvailableCaptureModesForCameraDevice(i
 bool UnityIosImagePickerController_IsFlashAvailableForCameraDevice(int cameraDevice)
 {
     return [UIImagePickerController isFlashAvailableForCameraDevice:cameraDevice];
+}
+
+void UnityIosImagePickerController_Present(
+    int requestId,
+    int sourceType,
+    const char* serializedMediaTypes,
+    bool allowsEditing,
+    int videoQuality,
+    double videoMaximumDurationInSeconds,
+    bool showCameraControls,
+    int cameraDevice,
+    int cameraCaptureMode,
+    int cameraFlashMode)
+{
+    NSString *serializedMediaTypesString = [NSString stringWithUTF8String:serializedMediaTypes];
+    NSArray <NSString *> *mediaTypes = [serializedMediaTypesString componentsSeparatedByString:@"#"];
+    UnityIosImagePickerController *defaultController = [UnityIosImagePickerController defaultController];
+    [defaultController presentImagePickerControllerForRequestId:requestId
+                                                     sourceType:sourceType
+                                                     mediaTypes:mediaTypes
+                                                  allowsEditing:allowsEditing ? YES : NO
+                                               videoQualityType:videoQuality
+                                               maxVideoDuration:videoMaximumDurationInSeconds
+                                             showCameraControls:showCameraControls ? YES : NO
+                                                   cameraDevice:cameraDevice
+                                              cameraCaptureMode:cameraCaptureMode
+                                                      flashMode:cameraFlashMode];
 }

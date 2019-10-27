@@ -39,6 +39,9 @@ namespace ImagePicker.Ios
         /// <returns><c>true</c> if cameraDevice can use flash illumination, or <c>false</c> if it cannot.</returns>
         bool IsFlashAvailableForCameraDevice(IosImagePickerCameraDevice cameraDevice);
         
+        string MediaTypeImage { get; }
+        string MediaTypeMovie { get; }
+        
         /// <summary>
         /// The type of picker interface to be displayed by the controller.
         /// </summary>
@@ -83,5 +86,7 @@ namespace ImagePicker.Ios
         /// The flash mode used by the active camera.
         /// </summary>
         IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
+
+        void Present();
     }
 }
