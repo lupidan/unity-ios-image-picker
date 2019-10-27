@@ -61,9 +61,13 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     [imagePickerController setAllowsEditing:allowsEditing];
     [imagePickerController setVideoQuality:qualityType];
     [imagePickerController setVideoMaximumDuration:maxVideoDuration];
-    [imagePickerController setCameraDevice:cameraDevice];
-    [imagePickerController setCameraCaptureMode:cameraCaptureMode];
-    [imagePickerController setCameraFlashMode:flashMode];
+    
+    if (sourceType == UIImagePickerControllerSourceTypeCamera)
+    {
+        [imagePickerController setCameraDevice:cameraDevice];
+        [imagePickerController setCameraCaptureMode:cameraCaptureMode];
+        [imagePickerController setCameraFlashMode:flashMode];
+    }
     
     NSValue *imagePickerControllerValue = [NSValue valueWithNonretainedObject:imagePickerController];
     [[self requestIdsDictionary] setObject:@(requestId) forKey:imagePickerControllerValue];
@@ -148,6 +152,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     
     if (!requestIdNumber || [self resultCallback] == NULL)
     {
+        [picker dismissViewControllerAnimated:YES completion:nil];
         return;
     }
     
@@ -189,6 +194,8 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     NSData *mediaMetadataJsonData = mediaMetadata ? [NSJSONSerialization dataWithJSONObject:mediaMetadata options:NULL error:nil] : nil;
     NSString *mediaMetadataJsonString = mediaMetadataJsonData ? [[NSString alloc] initWithData:mediaMetadataJsonData encoding:NSUTF8StringEncoding] : nil;
     result.mediaMetadataJson = UnityIosImagePickerController_CopyString([mediaMetadataJsonString UTF8String]);
+    
+    [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) imagePickerControllerDidCancel:(UIImagePickerController *)picker
@@ -199,6 +206,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     
     if (!requestIdNumber || [self resultCallback] == NULL)
     {
+        [picker dismissViewControllerAnimated:YES completion:nil];
         return;
     }
     
@@ -213,6 +221,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     result.mediaMetadataJson = NULL;
     
     [self resultCallback]([requestIdNumber intValue], result);
+    [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end
