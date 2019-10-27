@@ -12,7 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
                                     allowsEditing:(BOOL)allowsEditing
                                  videoQualityType:(UIImagePickerControllerQualityType)qualityType
                                  maxVideoDuration:(NSTimeInterval)maxVideoDuration
-                               showCameraControls:(BOOL)showCameraControls
       cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode;

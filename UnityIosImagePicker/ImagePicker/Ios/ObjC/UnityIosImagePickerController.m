@@ -50,7 +50,6 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
                                     allowsEditing:(BOOL)allowsEditing
                                  videoQualityType:(UIImagePickerControllerQualityType)qualityType
                                  maxVideoDuration:(NSTimeInterval)maxVideoDuration
-                               showCameraControls:(BOOL)showCameraControls
                                      cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode
@@ -62,7 +61,6 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     [imagePickerController setAllowsEditing:allowsEditing];
     [imagePickerController setVideoQuality:qualityType];
     [imagePickerController setVideoMaximumDuration:maxVideoDuration];
-    [imagePickerController setShowsCameraControls:showCameraControls];
     [imagePickerController setCameraDevice:cameraDevice];
     [imagePickerController setCameraCaptureMode:cameraCaptureMode];
     [imagePickerController setCameraFlashMode:flashMode];
@@ -282,7 +280,6 @@ void UnityIosImagePickerController_Present(
     bool allowsEditing,
     int videoQuality,
     double videoMaximumDurationInSeconds,
-    bool showCameraControls,
     int cameraDevice,
     int cameraCaptureMode,
     int cameraFlashMode)
@@ -296,7 +293,6 @@ void UnityIosImagePickerController_Present(
                                                   allowsEditing:allowsEditing ? YES : NO
                                                videoQualityType:videoQuality
                                                maxVideoDuration:videoMaximumDurationInSeconds
-                                             showCameraControls:showCameraControls ? YES : NO
                                                    cameraDevice:cameraDevice
                                               cameraCaptureMode:cameraCaptureMode
                                                       flashMode:cameraFlashMode];

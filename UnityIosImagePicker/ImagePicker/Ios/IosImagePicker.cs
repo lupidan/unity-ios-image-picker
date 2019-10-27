@@ -54,7 +54,6 @@ namespace ImagePicker.Ios
         public bool AllowsEditing { get; set; }
         public IosImagePickerVideoQualityType VideoQuality { get; set; }
         public TimeSpan VideoMaximumDuration { get; set; }
-        public bool ShowCameraControls { get; set; }
         public IosImagePickerCameraDevice CameraDevice { get; set; }
         public IosImagePickerVideoCaptureMode CameraCaptureMode { get; set; }
         public IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
@@ -71,7 +70,6 @@ namespace ImagePicker.Ios
             this.AllowsEditing = false;
             this.VideoQuality = IosImagePickerVideoQualityType.Medium;
             this.VideoMaximumDuration = TimeSpan.FromSeconds(600.0);
-            this.ShowCameraControls = true;
             this.CameraDevice = IosImagePickerCameraDevice.Rear;
             this.CameraCaptureMode = IosImagePickerVideoCaptureMode.Photo;
             this.CameraFlashMode = IosImagePickerCameraFlashMode.Auto;
@@ -92,7 +90,6 @@ namespace ImagePicker.Ios
                 this.AllowsEditing,
                 this.VideoQuality,
                 this.VideoMaximumDuration.TotalSeconds,
-                this.ShowCameraControls,
                 this.CameraDevice,
                 this.CameraCaptureMode,
                 this.CameraFlashMode);
@@ -129,7 +126,6 @@ namespace ImagePicker.Ios
                 bool allowsEditing,
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerVideoQualityType videoQuality,
                 double videoMaximumDurationInSeconds,
-                bool showCameraControls,
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerCameraDevice cameraDevice,
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerVideoCaptureMode cameraCaptureMode,
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerCameraFlashMode cameraFlashMode);

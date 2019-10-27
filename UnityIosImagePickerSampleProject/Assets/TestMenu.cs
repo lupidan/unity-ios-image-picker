@@ -44,4 +44,10 @@ public class TestMenu : MonoBehaviour
         
         Debug.Log(stringBuilder.ToString());
     }
+
+    public void Present()
+    {
+        var imagePicker = new IosImagePicker();
+        imagePicker.Present();
+    }
 }

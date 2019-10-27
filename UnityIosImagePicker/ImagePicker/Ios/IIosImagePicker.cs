@@ -39,7 +39,14 @@ namespace ImagePicker.Ios
         /// <returns><c>true</c> if cameraDevice can use flash illumination, or <c>false</c> if it cannot.</returns>
         bool IsFlashAvailableForCameraDevice(IosImagePickerCameraDevice cameraDevice);
         
+        /// <summary>
+        /// The abstract media type identifier for image.
+        /// </summary>
         string MediaTypeImage { get; }
+        
+        /// <summary>
+        /// The abstract media type identifier for video.
+        /// </summary>
         string MediaTypeMovie { get; }
         
         /// <summary>
@@ -66,12 +73,7 @@ namespace ImagePicker.Ios
         /// The maximum duration, in seconds, for a video recording.
         /// </summary>
         TimeSpan VideoMaximumDuration { get; set; }
-        
-        /// <summary>
-        /// Indicates whether the image picker displays the default camera controls.
-        /// </summary>
-        bool ShowCameraControls { get; set; }
-        
+
         /// <summary>
         /// The camera used by the image picker controller.
         /// </summary>
