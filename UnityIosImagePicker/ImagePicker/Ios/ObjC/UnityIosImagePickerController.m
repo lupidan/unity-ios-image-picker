@@ -4,7 +4,7 @@
 typedef struct
 {
     bool didCancel;
-    CGRect cropRect;
+    const char *serializedCropRect;
     const char *mediaType;
     const char *imageUrl;
     const char *originalImageFileUrl;
@@ -13,11 +13,11 @@ typedef struct
     const char *mediaMetadataJson;
 } UnityIosImagePickerControllerResult;
 
-typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosImagePickerControllerResult result);
+typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, UnityIosImagePickerControllerResult result);
 
 @interface UnityIosImagePickerController () <UINavigationControllerDelegate, UIImagePickerControllerDelegate>
 @property(nonatomic, strong) NSMutableDictionary *requestIdsDictionary;
-@property(nonatomic, assign) UnityIosImagePickerControllerCallback resultCallback;
+@property(nonatomic, assign) UnityIosImagePickerControllerResultDelegate resultCallback;
 @end
 
 @implementation UnityIosImagePickerController
@@ -159,7 +159,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     result.mediaType = UnityIosImagePickerController_CopyString([mediaType UTF8String]);
     
     NSValue *cropRectValue = [info objectForKey:UIImagePickerControllerCropRect];
-    result.cropRect = cropRectValue ? [cropRectValue CGRectValue] : CGRectZero;
+    result.serializedCropRect = NULL;//cropRectValue ? [cropRectValue CGRectValue] : CGRectZero;
     
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 130000
     if (@available(iOS 11.0, *))
@@ -191,6 +191,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     NSString *mediaMetadataJsonString = mediaMetadataJsonData ? [[NSString alloc] initWithData:mediaMetadataJsonData encoding:NSUTF8StringEncoding] : nil;
     result.mediaMetadataJson = UnityIosImagePickerController_CopyString([mediaMetadataJsonString UTF8String]);
     
+    [self resultCallback]([requestIdNumber intValue], result);
     [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -209,7 +210,7 @@ typedef void (*UnityIosImagePickerControllerCallback)(int requestId, UnityIosIma
     UnityIosImagePickerControllerResult result;
     result.didCancel = true;
     result.mediaType = NULL;
-    result.cropRect = CGRectZero;
+    result.serializedCropRect = NULL;// CGRectZero;
     result.imageUrl = NULL;
     result.originalImageFileUrl = NULL;
     result.editedImageFileUrl = NULL;
@@ -235,6 +236,11 @@ const char* UnityIosImagePickerController_CopyString(const char* string)
     strcpy(res, string);
 
     return res;
+}
+
+void UnityIosImagePickerController_SetResultCallback(UnityIosImagePickerControllerResultDelegate resultCallback)
+{
+    [[UnityIosImagePickerController defaultController] setResultCallback:resultCallback];
 }
 
 const char* UnityIosImagePickerController_GetMediaTypeImage()

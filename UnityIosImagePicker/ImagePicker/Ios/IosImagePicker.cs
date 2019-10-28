@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using AOT;
+using UnityEngine;
 
 namespace ImagePicker.Ios
 {
@@ -77,6 +79,9 @@ namespace ImagePicker.Ios
 
         public void Present()
         {
+            // Set callback if needed
+            PInvoke.UnityIosImagePickerController_SetResultCallback(PInvoke.UnityIosImagePickerControllerResultCallback);
+
             var mediaTypes = this.MediaTypes;
             if (mediaTypes == null)
                 mediaTypes = AvailableMediaTypesForSourceType(this.SourceType);
@@ -97,11 +102,34 @@ namespace ImagePicker.Ios
         
         private static class PInvoke
         {
+            public struct UnityIosImagePickerControllerRawResult
+            {
+                public bool didCancel;
+                public string serializedCropRect;
+                public string mediaType;
+                public string imageUrl;
+                public string originalImageFileUrl;
+                public string editedImageFileUrl;
+                public string videoFileUrl;
+                public string mediaMetadataJson;
+            }
+            
+            public delegate void UnityIosImagePickerControllerResultDelegate(int requestId, UnityIosImagePickerControllerRawResult result);
+
+            [MonoPInvokeCallback(typeof(UnityIosImagePickerControllerResultDelegate))]
+            public static void UnityIosImagePickerControllerResultCallback(int requestId, [MarshalAs(UnmanagedType.Struct)] UnityIosImagePickerControllerRawResult result)
+            {
+                Debug.Log("WE GOT " + result.mediaType);
+            }
+            
             [DllImport("__Internal")]
-            public static extern string UnityIosImagePickerController_GetMediaTypeImage();
+            public static extern string UnityIosImagePickerController_SetResultCallback(UnityIosImagePickerControllerResultDelegate resultCallback);
             
             [DllImport("__Internal")]
             public static extern string UnityIosImagePickerController_GetMediaTypeMovie();
+            
+            [DllImport("__Internal")]
+            public static extern string UnityIosImagePickerController_GetMediaTypeImage();
             
             [DllImport("__Internal")]
             public static extern bool UnityIosImagePickerController_IsSourceTypeAvailable([MarshalAs(UnmanagedType.SysInt)]IosImagePickerSourceType sourceType);
