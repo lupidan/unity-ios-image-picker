@@ -1,4 +1,4 @@
-namespace ImagePicker.Ios
+namespace IosImagePicker
 {
     /// <summary>
     /// The source to use when picking an image or when determining available media types.

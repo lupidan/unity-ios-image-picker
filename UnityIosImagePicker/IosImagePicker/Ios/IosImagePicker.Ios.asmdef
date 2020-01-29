@@ -1,8 +1,13 @@
 {
-    "name": "ImagePicker.Ios",
-    "references": [],
+    "name": "IosImagePicker.Ios",
+    "references": [
+        "IosImagePicker"
+    ],
     "optionalUnityReferences": [],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor",
+        "iOS"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

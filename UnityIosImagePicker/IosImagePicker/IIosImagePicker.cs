@@ -1,6 +1,6 @@
 using System;
 
-namespace ImagePicker.Ios
+namespace IosImagePicker
 {
     public interface IIosImagePicker
     {
@@ -30,7 +30,7 @@ namespace ImagePicker.Ios
         /// </summary>
         /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera you want to interrogate.</param>
         /// <returns>An array of IosImagePickerVideoCaptureMode indicating the capture modes supported by cameraDevice.</returns>
-        IosImagePickerVideoCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice);
+        IosImagePickerCameraCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice);
 
         /// <summary>
         /// Indicates whether a given camera has flash illumination capability.
@@ -82,13 +82,22 @@ namespace ImagePicker.Ios
         /// <summary>
         /// The capture mode used by the camera.
         /// </summary>
-        IosImagePickerVideoCaptureMode CameraCaptureMode { get; set; }
+        IosImagePickerCameraCaptureMode CameraCaptureMode { get; set; }
         
         /// <summary>
         /// The flash mode used by the active camera.
         /// </summary>
         IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
 
-        void Present();
+        /// <summary>
+        /// Presents the IosImagePicker with a result callback.
+        /// </summary>
+        /// <param name="resultCallback">The callback to be called when the image pickers has finished.</param>
+        void Present(Action<IosImagePickerResult> resultCallback);
+
+        /// <summary>
+        /// Updates the picker controller to execute the result callbacks in a controlled context.
+        /// </summary>
+        void Update();
     }
 }

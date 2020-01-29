@@ -1,10 +1,10 @@
-namespace ImagePicker.Ios
+namespace IosImagePicker
 {
     /// <summary>
     /// The category of media for the camera to capture.
     /// Maps UIImagePickerControllerCameraCaptureMode from UIKit
     /// </summary>
-    public enum IosImagePickerVideoCaptureMode
+    public enum IosImagePickerCameraCaptureMode
     {
         /// <summary>
         /// Specifies that the camera captures still images.

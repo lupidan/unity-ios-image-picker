@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using AOT;
+using IosImagePicker;
 using UnityEngine;
 
 namespace ImagePicker.Ios
@@ -26,19 +27,19 @@ namespace ImagePicker.Ios
             return serializedMediaTypes != null ? serializedMediaTypes.Split(SerializationSeparator) : new string[0];
         }
 
-        public IosImagePickerVideoCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice)
+        public IosImagePickerCameraCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice)
         {
             var serializedCaptureModes = PInvoke.UnityIosImagePickerController_AvailableCaptureModesForCameraDevice(cameraDevice);
             if (serializedCaptureModes == null)
-                return new IosImagePickerVideoCaptureMode[0];
+                return new IosImagePickerCameraCaptureMode[0];
 
             var rawCaptureModes = serializedCaptureModes.Split(SerializationSeparator);
-            var captureModes = new List<IosImagePickerVideoCaptureMode>();
+            var captureModes = new List<IosImagePickerCameraCaptureMode>();
             for (var i = 0; i < rawCaptureModes.Length; i++)
             {
                 int parsedCaptureMode;
                 if (int.TryParse(rawCaptureModes[i], out parsedCaptureMode))
-                    captureModes.Add((IosImagePickerVideoCaptureMode)parsedCaptureMode);
+                    captureModes.Add((IosImagePickerCameraCaptureMode)parsedCaptureMode);
             }
 
             return captureModes.ToArray();
@@ -57,7 +58,7 @@ namespace ImagePicker.Ios
         public IosImagePickerVideoQualityType VideoQuality { get; set; }
         public TimeSpan VideoMaximumDuration { get; set; }
         public IosImagePickerCameraDevice CameraDevice { get; set; }
-        public IosImagePickerVideoCaptureMode CameraCaptureMode { get; set; }
+        public IosImagePickerCameraCaptureMode CameraCaptureMode { get; set; }
         public IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
 
         public IosImagePicker()
@@ -73,14 +74,15 @@ namespace ImagePicker.Ios
             this.VideoQuality = IosImagePickerVideoQualityType.Medium;
             this.VideoMaximumDuration = TimeSpan.FromSeconds(600.0);
             this.CameraDevice = IosImagePickerCameraDevice.Rear;
-            this.CameraCaptureMode = IosImagePickerVideoCaptureMode.Photo;
+            this.CameraCaptureMode = IosImagePickerCameraCaptureMode.Photo;
             this.CameraFlashMode = IosImagePickerCameraFlashMode.Auto;
         }
 
-        public void Present()
+        public void Present(Action<IosImagePickerResult> resultCallback)
         {
-            // Set callback if needed
             PInvoke.UnityIosImagePickerController_SetResultCallback(PInvoke.UnityIosImagePickerControllerResultCallback);
+
+            var requestId = PInvoke.AddCallback(resultCallback);
 
             var mediaTypes = this.MediaTypes;
             if (mediaTypes == null)
@@ -89,7 +91,7 @@ namespace ImagePicker.Ios
             var serializedMediaTypes = string.Join(SerializationSeparator.ToString(), mediaTypes);
             
             PInvoke.UnityIosImagePickerController_Present(
-                1,
+                requestId,
                 this.SourceType,
                 serializedMediaTypes,
                 this.AllowsEditing,
@@ -99,10 +101,15 @@ namespace ImagePicker.Ios
                 this.CameraCaptureMode,
                 this.CameraFlashMode);
         }
+
+        public void Update()
+        {
+            PInvoke.ExecuteScheduledCallbacks();
+        }
         
         private static class PInvoke
         {
-            public struct UnityIosImagePickerControllerRawResult
+            public struct RawResult
             {
                 public bool didCancel;
                 public string serializedCropRect;
@@ -113,17 +120,65 @@ namespace ImagePicker.Ios
                 public string videoFileUrl;
                 public string mediaMetadataJson;
             }
+
+            private const int InitialCallbackId = 1;
+            private const int MaxCallbackId = int.MaxValue;
             
-            public delegate void UnityIosImagePickerControllerResultDelegate(int requestId, UnityIosImagePickerControllerRawResult result);
+            private static int _callbackId = InitialCallbackId;
+            
+            private static readonly Dictionary<int, Action<IosImagePickerResult>> CallbackDictionary = new Dictionary<int, Action<IosImagePickerResult>>();
+            private static readonly List<Action> ScheduledCallbacks = new List<Action>();
+
+            public static int AddCallback(Action<IosImagePickerResult> callback)
+            {
+                var storedCallbackId = _callbackId;
+                CallbackDictionary[storedCallbackId] = callback;
+                
+                _callbackId += 1;
+                if (_callbackId >= MaxCallbackId)
+                    _callbackId = InitialCallbackId;
+                
+                return storedCallbackId;
+            }
+            
+            public static void ExecuteScheduledCallbacks()
+            {
+                for (var i = 0; i < ScheduledCallbacks.Count; i++)
+                {
+                    var callback = ScheduledCallbacks[i];
+                    if (callback != null)
+                        callback();
+                }
+
+                ScheduledCallbacks.Clear();
+            }
+            
+            public delegate void UnityIosImagePickerControllerResultDelegate(int requestId, string resultJsonPayload);
 
             [MonoPInvokeCallback(typeof(UnityIosImagePickerControllerResultDelegate))]
-            public static void UnityIosImagePickerControllerResultCallback(int requestId, [MarshalAs(UnmanagedType.Struct)] UnityIosImagePickerControllerRawResult result)
+            public static void UnityIosImagePickerControllerResultCallback(int requestId, string resultJsonPayload)
             {
-                Debug.Log("WE GOT " + result.mediaType);
+                try
+                {
+                    Action<IosImagePickerResult> callback;
+                    if (CallbackDictionary.TryGetValue(requestId, out callback))
+                    {
+                        CallbackDictionary.Remove(requestId);
+
+                        Debug.Log(resultJsonPayload);
+                        
+                        if (callback != null)
+                            ScheduledCallbacks.Add(() => callback(null));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Failed handling of callback for request with Id " + requestId + " :: " + e.Message);
+                }
             }
             
             [DllImport("__Internal")]
-            public static extern string UnityIosImagePickerController_SetResultCallback(UnityIosImagePickerControllerResultDelegate resultCallback);
+            public static extern void UnityIosImagePickerController_SetResultCallback(UnityIosImagePickerControllerResultDelegate resultCallback);
             
             [DllImport("__Internal")]
             public static extern string UnityIosImagePickerController_GetMediaTypeMovie();
@@ -155,7 +210,7 @@ namespace ImagePicker.Ios
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerVideoQualityType videoQuality,
                 double videoMaximumDurationInSeconds,
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerCameraDevice cameraDevice,
-                [MarshalAs(UnmanagedType.SysInt)]IosImagePickerVideoCaptureMode cameraCaptureMode,
+                [MarshalAs(UnmanagedType.SysInt)]IosImagePickerCameraCaptureMode cameraCaptureMode,
                 [MarshalAs(UnmanagedType.SysInt)]IosImagePickerCameraFlashMode cameraFlashMode);
         }
     }

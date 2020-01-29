@@ -1,19 +1,7 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "UnityIosImagePickerController.h"
 
-typedef struct
-{
-    bool didCancel;
-    const char *serializedCropRect;
-    const char *mediaType;
-    const char *imageUrl;
-    const char *originalImageFileUrl;
-    const char *editedImageFileUrl;
-    const char *videoFileUrl;
-    const char *mediaMetadataJson;
-} UnityIosImagePickerControllerResult;
-
-typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, UnityIosImagePickerControllerResult result);
+typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const char* resultPayload);
 
 @interface UnityIosImagePickerController () <UINavigationControllerDelegate, UIImagePickerControllerDelegate>
 @property(nonatomic, strong) NSMutableDictionary *requestIdsDictionary;
@@ -152,46 +140,44 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, Unity
         return;
     }
     
-    UnityIosImagePickerControllerResult result;
-    result.didCancel = false;
-
     NSString *mediaType = [info objectForKey:UIImagePickerControllerMediaType];
-    result.mediaType = UnityIosImagePickerController_CopyString([mediaType UTF8String]);
     
     NSValue *cropRectValue = [info objectForKey:UIImagePickerControllerCropRect];
-    result.serializedCropRect = NULL;//cropRectValue ? [cropRectValue CGRectValue] : CGRectZero;
     
+    UIImage *originalImage = [info objectForKey:UIImagePickerControllerOriginalImage];
+    NSString *originalImageFilepath = [self copyImageToTempFolder:originalImage];
+    
+    UIImage *editedImage = [info objectForKey:UIImagePickerControllerEditedImage];
+    NSString *editedImageFilepath = [self copyImageToTempFolder:editedImage];
+    
+    NSURL *mediaUrl = [info objectForKey:UIImagePickerControllerMediaURL];
+    NSString *mediaFilepath = [mediaUrl absoluteString];
+    
+    NSDictionary *mediaMetadata = [info objectForKey:UIImagePickerControllerMediaMetadata];
+    
+    NSString *imageFilepath = nil;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 130000
     if (@available(iOS 11.0, *))
     {
         NSURL *imageUrl = [info objectForKey:UIImagePickerControllerImageURL];
-        result.imageUrl = UnityIosImagePickerController_CopyString([[imageUrl absoluteString] UTF8String]);
+        imageFilepath = [imageUrl absoluteString];
     }
-    else
-    {
-        result.imageUrl = NULL;
-    }
-#else
-    result.imageUrl = NULL;
 #endif
     
-    UIImage *originalImage = [info objectForKey:UIImagePickerControllerOriginalImage];
-    NSString *originalImageFilepath = [self copyImageToTempFolder:originalImage];
-    result.originalImageFileUrl = UnityIosImagePickerController_CopyString([originalImageFilepath UTF8String]);
-
-    UIImage *editedImage = [info objectForKey:UIImagePickerControllerEditedImage];
-    NSString *editedImageFilepath = [self copyImageToTempFolder:editedImage];
-    result.editedImageFileUrl = UnityIosImagePickerController_CopyString([editedImageFilepath UTF8String]);
+    NSDictionary *resultPayloadDictionary = @{
+        @"didCancel": @false,
+        @"mediaType": mediaType ? mediaType : @"",
+        @"cropRect": cropRectValue ? cropRectValue : @"",
+        @"originalImageFilepath": originalImageFilepath ? originalImageFilepath : @"",
+        @"editedImageFilepath": editedImageFilepath ? editedImageFilepath : @"",
+        @"mediaFilepath": mediaFilepath ? mediaFilepath : @"",
+        @"imageFilepath": imageFilepath ? imageFilepath : @"",
+        @"mediaMetadata": mediaMetadata ? mediaMetadata : @"{}",
+    };
     
-    NSURL *mediaUrl = [info objectForKey:UIImagePickerControllerMediaURL];
-    result.videoFileUrl = UnityIosImagePickerController_CopyString([[mediaUrl absoluteString] UTF8String]);
-    
-    NSDictionary *mediaMetadata = [info objectForKey:UIImagePickerControllerMediaMetadata];
-    NSData *mediaMetadataJsonData = mediaMetadata ? [NSJSONSerialization dataWithJSONObject:mediaMetadata options:NULL error:nil] : nil;
-    NSString *mediaMetadataJsonString = mediaMetadataJsonData ? [[NSString alloc] initWithData:mediaMetadataJsonData encoding:NSUTF8StringEncoding] : nil;
-    result.mediaMetadataJson = UnityIosImagePickerController_CopyString([mediaMetadataJsonString UTF8String]);
-    
-    [self resultCallback]([requestIdNumber intValue], result);
+    NSData *resultPayloadJsonData = [NSJSONSerialization dataWithJSONObject:resultPayloadDictionary options:NULL error:nil];
+    NSString *resultPayloadJsonString = [[NSString alloc] initWithData:resultPayloadJsonData encoding:NSUTF8StringEncoding];
+    [self resultCallback]([requestIdNumber intValue], [resultPayloadJsonString UTF8String]);
     [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -207,17 +193,20 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, Unity
         return;
     }
     
-    UnityIosImagePickerControllerResult result;
-    result.didCancel = true;
-    result.mediaType = NULL;
-    result.serializedCropRect = NULL;// CGRectZero;
-    result.imageUrl = NULL;
-    result.originalImageFileUrl = NULL;
-    result.editedImageFileUrl = NULL;
-    result.videoFileUrl = NULL;
-    result.mediaMetadataJson = NULL;
+    NSDictionary *resultPayloadDictionary = @{
+        @"didCancel": @true,
+        @"mediaType": @"",
+        @"cropRect": @"",
+        @"originalImageFilepath": @"",
+        @"editedImageFilepath": @"",
+        @"mediaFilepath": @"",
+        @"imageFilepath": @"",
+        @"mediaMetadata": @"{}",
+    };
     
-    [self resultCallback]([requestIdNumber intValue], result);
+    NSData *resultPayloadJsonData = [NSJSONSerialization dataWithJSONObject:resultPayloadDictionary options:NULL error:nil];
+    NSString *resultPayloadJsonString = [[NSString alloc] initWithData:resultPayloadJsonData encoding:NSUTF8StringEncoding];
+    [self resultCallback]([requestIdNumber intValue], [resultPayloadJsonString UTF8String]);
     [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
