@@ -25,7 +25,7 @@
         "/README.md.meta",
         "/package.json",
         "/package.json.meta",
-        "/UnityIosImagePicker",
-        "/UnityIosImagePicker.meta"
+        "/IosImagePicker",
+        "/IosImagePicker.meta"
     ]
 }
