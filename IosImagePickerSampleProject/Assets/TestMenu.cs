@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using DefaultNamespace;
 using IosImagePicker;
-using IosImagePicker.Editor;
+using IosImagePicker.Enums;
 using UnityEngine;
 using UnityEngine.UI;
+using IosImagePicker;
+using IosImagePicker.IOS.NativeMessages;
+using IosImagePicker = IosImagePicker.IosImagePicker;
 
 public class TestMenu : MonoBehaviour
 {
@@ -57,7 +60,8 @@ public class TestMenu : MonoBehaviour
 
     private void Start()
     {
-        var iosImagePicker = new EditorIosImagePicker();
+        var payloadDeserializer = new PayloadDeserializer();
+        var iosImagePicker = new global::IosImagePicker.IosImagePicker(payloadDeserializer);
         var interfaceControllers = new List<IInterfaceController>();
         
         var sourceTypeDropdownController = SetupSourceTypeDropdown(iosImagePicker, this.sourceTypeRowGameObject, this.sourceTypeDropdown);

@@ -126,6 +126,77 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     return writeSuccess ? [tempImageUrl absoluteString] : nil;
 }
 
+- (id) filterObjectForSerialization:(id)originalValue
+{
+    if (!originalValue)
+    {
+        return nil;
+    }
+    
+    if ([originalValue isKindOfClass:[NSNumber class]] || [originalValue isKindOfClass:[NSString class]])
+    {
+        return originalValue;
+    }
+    
+    if ([originalValue isKindOfClass:[NSDictionary class]])
+    {
+        return [self filterDictionaryForSerialization:originalValue];
+    }
+    
+    if ([originalValue isKindOfClass:[NSData class]])
+    {
+        return [originalValue base64EncodedStringWithOptions:0];
+    }
+    
+    if ([originalValue isKindOfClass:[NSArray class]])
+    {
+        return [self filterArrayForSerialization:originalValue];
+    }
+    
+    return [originalValue description];
+}
+
+- (NSDictionary *) filterDictionaryForSerialization:(NSDictionary *)originalDictionary
+{
+    if (!originalDictionary)
+    {
+        return nil;
+    }
+    
+    NSMutableDictionary *filteredDictionary = [NSMutableDictionary dictionary];
+    [originalDictionary enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL* stop) {
+        NSString *filteredKey = [key isKindOfClass:[NSString class]] ? key : [key description];
+        id filteredValue = [self filterObjectForSerialization:value];
+        
+        if (filteredKey && filteredValue)
+        {
+            [filteredDictionary setObject:filteredValue forKey:filteredKey];
+        }
+    }];
+    
+    return [NSDictionary dictionaryWithDictionary:filteredDictionary];
+}
+
+- (NSArray *) filterArrayForSerialization:(NSArray *)originalArray
+{
+    if (!originalArray)
+    {
+        return nil;
+    }
+    
+    NSMutableArray *filteredArray = [NSMutableArray array];
+    [originalArray enumerateObjectsUsingBlock:^(id obj, NSUInteger index, BOOL* stop) {
+        id filteredObj = [self filterObjectForSerialization:obj];
+        
+        if (filteredObj)
+        {
+            [filteredArray addObject:filteredObj];
+        }
+    }];
+    
+    return [NSArray arrayWithArray:filteredArray];
+}
+
 #pragma mark - UIImagePickerControllerDelegate implementation
 
 - (void) imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey, id> *)info
@@ -140,40 +211,90 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
         return;
     }
     
+    NSMutableDictionary *resultPayloadDictionary = [NSMutableDictionary dictionary];
+    [resultPayloadDictionary setObject:@false forKey:@"_didCancel"];
+    
     NSString *mediaType = [info objectForKey:UIImagePickerControllerMediaType];
+    if (mediaType)
+    {
+        [resultPayloadDictionary setObject:mediaType forKey:@"_mediaType"];
+    }
+    
+    NSMutableDictionary *imageResultPayloadDictionary = [NSMutableDictionary dictionary];
     
     NSValue *cropRectValue = [info objectForKey:UIImagePickerControllerCropRect];
+    if (cropRectValue)
+    {
+        CGRect cropRect = [cropRectValue CGRectValue];
+        NSDictionary *cropRectDictionary = @{
+            @"_originX" : @(cropRect.origin.x),
+            @"_originY" : @(cropRect.origin.y),
+            @"_sizeWidth" : @(cropRect.size.width),
+            @"_sizeHeight" : @(cropRect.size.height),
+        };
+        
+        [imageResultPayloadDictionary setObject:cropRectDictionary forKey:@"_hasCropRect"];
+        [imageResultPayloadDictionary setObject:cropRectDictionary forKey:@"_cropRect"];
+    }
     
     UIImage *originalImage = [info objectForKey:UIImagePickerControllerOriginalImage];
     NSString *originalImageFilepath = [self copyImageToTempFolder:originalImage];
+    if (originalImageFilepath)
+    {
+        [imageResultPayloadDictionary setObject:originalImageFilepath forKey:@"_originalImageFileUrl"];
+    }
     
     UIImage *editedImage = [info objectForKey:UIImagePickerControllerEditedImage];
     NSString *editedImageFilepath = [self copyImageToTempFolder:editedImage];
+    if (editedImageFilepath)
+    {
+        [imageResultPayloadDictionary setObject:editedImageFilepath forKey:@"_editedImageFileUrl"];
+    }
+    
+    NSString *imageFilepath = nil;
+    #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 130000
+        if (@available(iOS 11.0, *))
+        {
+            NSURL *imageUrl = [info objectForKey:UIImagePickerControllerImageURL];
+            imageFilepath = [imageUrl absoluteString];
+        }
+    #endif
+    if (imageFilepath)
+    {
+        [imageResultPayloadDictionary setObject:imageFilepath forKey:@"_imageFileUrl"];
+    }
+    
+    if ([imageResultPayloadDictionary count] > 0)
+    {
+        [resultPayloadDictionary setObject:@YES forKey:@"_containsImage"];
+        [resultPayloadDictionary setObject:imageResultPayloadDictionary forKey:@"_image"];
+    }
+    
+    NSMutableDictionary *movieResultPayloadDictionary = [NSMutableDictionary dictionary];
     
     NSURL *mediaUrl = [info objectForKey:UIImagePickerControllerMediaURL];
     NSString *mediaFilepath = [mediaUrl absoluteString];
-    
-    NSDictionary *mediaMetadata = [info objectForKey:UIImagePickerControllerMediaMetadata];
-    
-    NSString *imageFilepath = nil;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 130000
-    if (@available(iOS 11.0, *))
+    if (mediaFilepath)
     {
-        NSURL *imageUrl = [info objectForKey:UIImagePickerControllerImageURL];
-        imageFilepath = [imageUrl absoluteString];
+        [movieResultPayloadDictionary setObject:mediaFilepath forKey:@"_movieFileUrl"];
     }
-#endif
     
-    NSDictionary *resultPayloadDictionary = @{
-        @"didCancel": @false,
-        @"mediaType": mediaType ? mediaType : @"",
-        @"cropRect": cropRectValue ? cropRectValue : @"",
-        @"originalImageFilepath": originalImageFilepath ? originalImageFilepath : @"",
-        @"editedImageFilepath": editedImageFilepath ? editedImageFilepath : @"",
-        @"mediaFilepath": mediaFilepath ? mediaFilepath : @"",
-        @"imageFilepath": imageFilepath ? imageFilepath : @"",
-        @"mediaMetadata": mediaMetadata ? mediaMetadata : @"{}",
-    };
+    if ([movieResultPayloadDictionary count] > 0)
+    {
+        [resultPayloadDictionary setObject:@YES forKey:@"_containsMovie"];
+        [resultPayloadDictionary setObject:movieResultPayloadDictionary forKey:@"_movie"];
+    }
+    
+    NSDictionary *filteredMediaMetadata = [self filterObjectForSerialization:[info objectForKey:UIImagePickerControllerMediaMetadata]];
+    if (filteredMediaMetadata)
+    {
+        NSData *filteredMediaMetadataJsonData = [NSJSONSerialization dataWithJSONObject:filteredMediaMetadata options:NULL error:nil];
+        NSString *filteredMediaMetadataJsonString = [[NSString alloc] initWithData:filteredMediaMetadataJsonData encoding:NSUTF8StringEncoding];
+        if (filteredMediaMetadataJsonString)
+        {
+            [resultPayloadDictionary setObject:filteredMediaMetadataJsonString forKey:@"_mediaMetadataJson"];
+        }
+    }
     
     NSData *resultPayloadJsonData = [NSJSONSerialization dataWithJSONObject:resultPayloadDictionary options:NULL error:nil];
     NSString *resultPayloadJsonString = [[NSString alloc] initWithData:resultPayloadJsonData encoding:NSUTF8StringEncoding];
@@ -195,13 +316,6 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     
     NSDictionary *resultPayloadDictionary = @{
         @"didCancel": @true,
-        @"mediaType": @"",
-        @"cropRect": @"",
-        @"originalImageFilepath": @"",
-        @"editedImageFilepath": @"",
-        @"mediaFilepath": @"",
-        @"imageFilepath": @"",
-        @"mediaMetadata": @"{}",
     };
     
     NSData *resultPayloadJsonData = [NSJSONSerialization dataWithJSONObject:resultPayloadDictionary options:NULL error:nil];

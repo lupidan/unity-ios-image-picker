@@ -15,13 +15,6 @@ namespace IosImagePicker
         
         private readonly IPayloadDeserializer _payloadDeserializer;
 #endif
-
-        public IosImagePicker(IPayloadDeserializer payloadDeserializer)
-        {
-#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
-            this._payloadDeserializer = payloadDeserializer;
-#endif
-        }
         
         public bool IsSourceTypeAvailable(IosImagePickerSourceType sourceType)
         {
@@ -93,9 +86,10 @@ namespace IosImagePicker
         public IosImagePickerCameraCaptureMode CameraCaptureMode { get; set; }
         public IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
 
-        public IosImagePicker()
+        public IosImagePicker(IPayloadDeserializer payloadDeserializer)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+            this._payloadDeserializer = payloadDeserializer;
             this.MediaTypeImage = PInvoke.UnityIosImagePickerController_GetMediaTypeImage();
             this.MediaTypeMovie = PInvoke.UnityIosImagePickerController_GetMediaTypeMovie();
 #else
