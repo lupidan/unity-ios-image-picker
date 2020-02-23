@@ -1,6 +1,6 @@
 ﻿#if !UNITY_EDITOR && UNITY_IOS
-#endif
 #define IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+#endif
 
 using System;
 using IosImagePicker.Enums;
@@ -109,11 +109,9 @@ namespace IosImagePicker
         public void Present(Action<IIosImagePickerResult> resultCallback)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
-            PInvoke.UnityIosImagePickerController_SetResultCallback(PInvoke.UnityIosImagePickerControllerResultCallback);
-
-            var requestId = PInvoke.AddCallback(jsonPayload =>
+            var requestId = CallbackHandler.AddCallback(payload =>
             {
-                var result = this._payloadDeserializer.DeserializeIosImagePickerResult(jsonPayload);
+                var result = this._payloadDeserializer.DeserializeIosImagePickerResult(payload);
                 resultCallback.Invoke(result);
             });
 
@@ -141,62 +139,88 @@ namespace IosImagePicker
         public void Update()
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
-            PInvoke.ExecuteScheduledCallbacks();
+            CallbackHandler.ExecutePendingCallbacks();
 #endif
         }
 
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+        private static class CallbackHandler
+        {
+            private const uint InitialCallbackId = 1U;
+            private const uint MaxCallbackId = uint.MaxValue;
+            
+            private static readonly object SyncLock = new object();
+            
+            private static uint _callbackId = InitialCallbackId;
+            private static bool _initialized = false;
+            
+            private static readonly System.Collections.Generic.Dictionary<uint, Action<string>> CallbackDictionary = new System.Collections.Generic.Dictionary<uint, Action<string>>();
+            private static readonly System.Collections.Generic.List<Action> ScheduledCallbacks = new System.Collections.Generic.List<Action>();
+            
+            public static uint AddCallback(Action<string> callback)
+            {
+                if (!_initialized)
+                {
+                    PInvoke.UnityIosImagePickerController_SetResultCallback(PInvoke.UnityIosImagePickerControllerResultCallback);
+                    _initialized = true;
+                }
+                
+                if (callback == null)
+                {
+                    throw new Exception("Can't add a null callback.");
+                }
+                
+                var usedCallbackId = 0U;
+                lock (SyncLock)
+                {
+                    usedCallbackId = _callbackId;
+                    CallbackDictionary[usedCallbackId] = callback;
+                
+                    _callbackId += 1;
+                    if (_callbackId >= MaxCallbackId)
+                        _callbackId = InitialCallbackId;
+                }
+                
+                return usedCallbackId;
+            }
+            
+            public static void ScheduleCallback(uint requestId, string payload)
+            {
+                lock (SyncLock)
+                {
+                    var callback = default(Action<string>);
+                    if (CallbackDictionary.TryGetValue(requestId, out callback))
+                    {
+                        ScheduledCallbacks.Add(() => callback.Invoke(payload));
+                        CallbackDictionary.Remove(requestId);
+                    }
+                }
+            }
+            
+            public static void ExecutePendingCallbacks()
+            {
+                lock (SyncLock)
+                {
+                    while (ScheduledCallbacks.Count > 0)
+                    {
+                        var action = ScheduledCallbacks[0];
+                        ScheduledCallbacks.RemoveAt(0);
+                        action.Invoke();
+                    }
+                }
+            }
+        }
+
         private static class PInvoke
         {
-            private const int InitialCallbackId = 1;
-            private const int MaxCallbackId = int.MaxValue;
-            
-            private static int _callbackId = InitialCallbackId;
-            
-            private static readonly System.Collections.Generic.Dictionary<int, Action<string>> CallbackDictionary = new System.Collections.Generic.Dictionary<int, Action<string>>();
-            private static readonly System.Collections.Generic.List<Action> ScheduledCallbacks = new System.Collections.Generic.List<Action>();
-
-            public static int AddCallback(Action<string> callback)
-            {
-                var storedCallbackId = _callbackId;
-                CallbackDictionary[storedCallbackId] = callback;
-                
-                _callbackId += 1;
-                if (_callbackId >= MaxCallbackId)
-                    _callbackId = InitialCallbackId;
-                
-                return storedCallbackId;
-            }
-            
-            public static void ExecuteScheduledCallbacks()
-            {
-                for (var i = 0; i < ScheduledCallbacks.Count; i++)
-                {
-                    var callback = ScheduledCallbacks[i];
-                    if (callback != null)
-                        callback();
-                }
-
-                ScheduledCallbacks.Clear();
-            }
-            
-            public delegate void UnityIosImagePickerControllerResultDelegate(int requestId, string resultJsonPayload);
+            public delegate void UnityIosImagePickerControllerResultDelegate(uint requestId, string payload);
 
             [AOT.MonoPInvokeCallback(typeof(UnityIosImagePickerControllerResultDelegate))]
-            public static void UnityIosImagePickerControllerResultCallback(int requestId, string resultJsonPayload)
+            public static void UnityIosImagePickerControllerResultCallback(uint requestId, string payload)
             {
                 try
                 {
-                    Action<string> callback;
-                    if (CallbackDictionary.TryGetValue(requestId, out callback))
-                    {
-                        CallbackDictionary.Remove(requestId);
-
-                        UnityEngine.Debug.Log(resultJsonPayload);
-                        
-                        if (callback != null)
-                            ScheduledCallbacks.Add(() => callback(resultJsonPayload));
-                    }
+                    CallbackHandler.ScheduleCallback(requestId, payload);
                 }
                 catch (Exception e)
                 {
@@ -235,7 +259,7 @@ namespace IosImagePicker
             
             [System.Runtime.InteropServices.DllImport("__Internal")]
             public static extern void UnityIosImagePickerController_Present(
-                int requestId,
+                uint requestId,
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerSourceType sourceType,
                 string serializedMediaTypes,
                 bool allowsEditing,

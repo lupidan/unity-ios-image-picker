@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using IosImagePicker;
 using IosImagePicker.IOS.NativeMessages;
+using System.IO;
+using System.Text;
 using IosImagePicker = IosImagePicker.IosImagePicker;
 
 public class TestMenu : MonoBehaviour
@@ -95,6 +97,14 @@ public class TestMenu : MonoBehaviour
 
         this._iosImagePicker = iosImagePicker;
         this._interfaceControllers = interfaceControllers;
+    }
+
+    private void Update()
+    {
+        if (this._iosImagePicker != null)
+        {
+            this._iosImagePicker.Update();
+        }
     }
 
     private static DropdownController<IosImagePickerSourceType> SetupSourceTypeDropdown(
@@ -339,7 +349,55 @@ public class TestMenu : MonoBehaviour
     {
         this._iosImagePicker.Present(result =>
         {
-            Debug.Log("WE have a result " + result);
+            var stringBuilder = new StringBuilder("RESULT:\n");
+            stringBuilder.AppendLine("Was Cancelled: " + result.DidCancel);
+            stringBuilder.AppendLine("Media Type: " + result.MediaType);
+            stringBuilder.AppendLine("Media Metadata: " + result.MediaMetadataJson);
+            if (result.Image != null)
+            {
+                stringBuilder.AppendLine("ImageFileUrl: " + result.Image.ImageFileUrl);
+                if (result.Image.ImageFileUrl != null)
+                {
+                    var uri = new Uri(result.Image.ImageFileUrl);
+                    var fileInfo = new FileInfo(uri.AbsolutePath);
+                    stringBuilder.AppendLine("ImageFileUrl Exists: " + fileInfo.Exists);
+                    stringBuilder.AppendLine("ImageFileUrl Size: " + fileInfo.Length);
+                }
+                
+                stringBuilder.AppendLine("OriginalImageFileUrl: " + result.Image.OriginalImageFileUrl);
+                if (result.Image.OriginalImageFileUrl != null)
+                {
+                    var uri = new Uri(result.Image.OriginalImageFileUrl);
+                    var fileInfo = new FileInfo(uri.AbsolutePath);
+                    stringBuilder.AppendLine("ImageFileUrl Exists: " + fileInfo.Exists);
+                    stringBuilder.AppendLine("ImageFileUrl Size: " + fileInfo.Length);
+                }
+                
+                stringBuilder.AppendLine("EditedImageFileUrl: " + result.Image.EditedImageFileUrl);
+                if (result.Image.EditedImageFileUrl != null)
+                {
+                    var uri = new Uri(result.Image.EditedImageFileUrl);
+                    var fileInfo = new FileInfo(uri.AbsolutePath);
+                    stringBuilder.AppendLine("EditedImageFileUrl Exists: " + fileInfo.Exists);
+                    stringBuilder.AppendLine("EditedImageFileUrl Size: " + fileInfo.Length);
+                }
+                
+                stringBuilder.AppendLine("CropRect: " + result.Image.CropRect.ToString());
+            }
+
+            if (result.Movie != null)
+            {
+                stringBuilder.AppendLine("MovieFileUrl: " + result.Movie.MovieFileUrl);
+                if (result.Movie.MovieFileUrl != null)
+                {
+                    var uri = new Uri(result.Movie.MovieFileUrl);
+                    var fileInfo = new FileInfo(uri.AbsolutePath);
+                    stringBuilder.AppendLine("MovieFileUrl Exists: " + fileInfo.Exists);
+                    stringBuilder.AppendLine("MovieFileUrl Size: " + fileInfo.Length);
+                }
+            }
+            
+            Debug.Log(stringBuilder.ToString());
         });
     }
 }

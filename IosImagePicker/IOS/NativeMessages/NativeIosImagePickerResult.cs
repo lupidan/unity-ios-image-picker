@@ -9,9 +9,9 @@ namespace IosImagePicker.IOS.NativeMessages
     {
         public bool _didCancel;
         public string _mediaType;
-        public bool _containsImage;
+        public bool _hasImage;
         public NativeIosImagePickerImageResult _image;
-        public bool _containsMovie;
+        public bool _hasMovie;
         public NativeIosImagePickerMovieResult _movie;
         public string _mediaMetadataJson;
 
@@ -27,8 +27,8 @@ namespace IosImagePicker.IOS.NativeMessages
         {
             NativeSerializationTools.FixSerializationForString(ref this._mediaType);
             NativeSerializationTools.FixSerializationForString(ref this._mediaMetadataJson);
-            NativeSerializationTools.FixSerializationForObject(ref this._image, this._containsImage);
-            NativeSerializationTools.FixSerializationForObject(ref this._movie, this._containsMovie);
+            NativeSerializationTools.FixSerializationForObject(ref this._image, this._hasImage);
+            NativeSerializationTools.FixSerializationForObject(ref this._movie, this._hasMovie);
         }
     }
 }

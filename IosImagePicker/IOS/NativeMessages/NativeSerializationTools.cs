@@ -8,9 +8,9 @@ namespace IosImagePicker.IOS.NativeMessages
                 originalString = null;
         }
         
-        internal static void FixSerializationForObject<T>(ref T originalObject, bool containsObject)
+        internal static void FixSerializationForObject<T>(ref T originalObject, bool hasObject)
         {
-            if (!containsObject)
+            if (!hasObject)
                 originalObject = default(T);
         }
     }

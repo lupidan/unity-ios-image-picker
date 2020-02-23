@@ -6,18 +6,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype) defaultController;
 
-- (void) presentImagePickerControllerForRequestId:(int)requestId
+- (void) presentImagePickerControllerForRequestId:(uint)requestId
                                        sourceType:(UIImagePickerControllerSourceType)sourceType
                                        mediaTypes:(NSArray<NSString *> *)mediaTypes
                                     allowsEditing:(BOOL)allowsEditing
                                  videoQualityType:(UIImagePickerControllerQualityType)qualityType
                                  maxVideoDuration:(NSTimeInterval)maxVideoDuration
-      cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
+                                     cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode;
 
 @end
 
 NS_ASSUME_NONNULL_END
-
-const char* UnityIosImagePickerController_CopyString(const char* string);

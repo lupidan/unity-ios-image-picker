@@ -17,15 +17,30 @@ namespace IosImagePicker.Interfaces
         string OriginalImageFileUrl { get; }
         
         /// <summary>
+        /// Error if there was some problem while retrieving the original image file.
+        /// </summary>
+        IIosError OriginalImageError { get; }
+        
+        /// <summary>
         /// Edited image file URL if image picker allowed editing. 
         /// Contains the file URL of the image returned by UIImagePickerControllerEditedImage that was saved in the temp folder.
         /// </summary>
         string EditedImageFileUrl { get; }
         
         /// <summary>
+        /// Error if there was some problem while retrieving the edited image file.
+        /// </summary>
+        IIosError EditedImageError { get; }
+        
+        /// <summary>
         /// Image file URL as returned from iOS 11 Onwards.
         /// Contains the file url returned by UIImagePickerControllerImageURL.
         /// </summary>
         string ImageFileUrl { get; }
+        
+        /// <summary>
+        /// Error if there was some problem while retrieving the image file.
+        /// </summary>
+        IIosError ImageError { get; }
     }
 }
