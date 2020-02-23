@@ -462,7 +462,7 @@ andSaveResultIntoPayloadDictionary:(NSMutableDictionary *)payloadDictionary
     }
     
     NSDictionary *resultPayloadDictionary = @{
-        @"didCancel": @true,
+        @"_didCancel": @YES,
     };
     
     NSData *resultPayloadJsonData = [NSJSONSerialization dataWithJSONObject:resultPayloadDictionary options:NULL error:nil];
