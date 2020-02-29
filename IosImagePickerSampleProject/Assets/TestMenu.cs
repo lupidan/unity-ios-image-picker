@@ -456,7 +456,8 @@ public class TestMenu : MonoBehaviour
         {
             return;
         }
-        
+
+        var totalFileSize = 0UL;
         var stringBuilder = new StringBuilder("CLEANUP:\n");
         for (var i = 0; i < cleanupResult.DeletionEntries.Length; i++)
         {
@@ -470,10 +471,21 @@ public class TestMenu : MonoBehaviour
                 deletionEntry.Deleted ? "Deleted" : "",
             };
 
+            totalFileSize += deletionEntry.FileSize;
+            
             stringBuilder.AppendLine(string.Join(" ", allDetails));
         }
         
         Debug.Log(stringBuilder.ToString());
+
+        var summaryDetails = new[]
+        {
+            preview ? "WOULD DELETE" : "DELETED",
+            cleanupResult.DeletionEntries.Length + " files",
+            totalFileSize + " bytes total",
+        };
+
+        Debug.Log(string.Join(" ", summaryDetails));
     }
     
 }

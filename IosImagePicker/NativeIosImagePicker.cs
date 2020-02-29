@@ -1,6 +1,6 @@
 ﻿#if !UNITY_EDITOR && UNITY_IOS
-#endif
 #define IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+#endif
 
 using System;
 using IosImagePicker.Enums;
