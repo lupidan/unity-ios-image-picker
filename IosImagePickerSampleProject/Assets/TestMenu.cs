@@ -451,11 +451,16 @@ public class TestMenu : MonoBehaviour
             return;            
         }
 
-        var deletionEntries = this._iosImagePicker.CleanPluginFolder(preview);
-        var stringBuilder = new StringBuilder("CLEANUP:\n");
-        for (var i = 0; i < deletionEntries.Length; i++)
+        var cleanupResult = this._iosImagePicker.CleanupPluginFolder(preview);
+        if (cleanupResult == null || cleanupResult.DeletionEntries == null)
         {
-            var deletionEntry = deletionEntries[i];
+            return;
+        }
+        
+        var stringBuilder = new StringBuilder("CLEANUP:\n");
+        for (var i = 0; i < cleanupResult.DeletionEntries.Length; i++)
+        {
+            var deletionEntry = cleanupResult.DeletionEntries[i];
             var allDetails = new[]
             {
                 deletionEntry.Path,

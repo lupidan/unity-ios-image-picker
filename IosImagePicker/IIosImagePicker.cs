@@ -68,10 +68,10 @@ namespace IosImagePicker
         void Update();
 
         /// <summary>
-        /// Cleanup the temp plugin folder, and returns a list of deletion entries for further information.
+        /// Cleanup the temp plugin folder, and returns details about the cleanup.
         /// </summary>
         /// <param name="preview">If set to true, no deletion will happen. Use this to get a preview of what files would be deleted.</param>
-        /// <returns>List of deletion entries with details about the cleanup process.</returns>
-        IIosImagePickerDeletionEntry[] CleanPluginFolder(bool preview);
+        /// <returns>Result of the cleanup process with with all the details.</returns>
+        IIosImagePickerCleanupResult CleanupPluginFolder(bool preview);
     }
 }

@@ -113,9 +113,9 @@ namespace IosImagePicker.Editor
             }
         }
 
-        public IIosImagePickerDeletionEntry[] CleanPluginFolder(bool preview)
+        public IIosImagePickerCleanupResult CleanupPluginFolder(bool preview)
         {
-            return new IIosImagePickerDeletionEntry[0];
+            return null;
         }
     }
 }

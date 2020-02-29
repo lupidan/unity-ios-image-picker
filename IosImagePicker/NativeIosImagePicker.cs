@@ -182,11 +182,13 @@ namespace IosImagePicker
 #endif
         }
 
-        public IIosImagePickerDeletionEntry[] CleanPluginFolder(bool preview)
+        public IIosImagePickerCleanupResult CleanupPluginFolder(bool preview)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             var jsonPayload = PInvoke.UnityIosImagePickerController_CleanupTempFolder(preview);
-            return this._payloadDeserializer.DeserializeIosImagePickerEntries(jsonPayload);
+            return this._payloadDeserializer.DeserializeIosImageCleanupResult(jsonPayload);
+#else
+            return null;
 #endif
         }
 

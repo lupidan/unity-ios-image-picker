@@ -143,7 +143,7 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
         [fileUrl getResourceValue:&isDirectoryNumber forKey:NSURLIsDirectoryKey error:&error];
         if (isDirectoryNumber)
         {
-            [deletionEntryDictionary setObject:[fileUrl path] forKey:@"_isDirectory"];
+            [deletionEntryDictionary setObject:isDirectoryNumber forKey:@"_isDirectory"];
         }
         else if (error)
         {
@@ -184,7 +184,11 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
         [deletionEntries addObject:[NSDictionary dictionaryWithDictionary:deletionEntryDictionary]];
     }
 
-    NSData *deletionEntriesJsonData = [NSJSONSerialization dataWithJSONObject:[NSArray arrayWithArray:deletionEntries] options:NULL error:nil];
+    NSDictionary *resultDictionary = @{
+        @"_deletionEntries" : [NSArray arrayWithArray:deletionEntries],
+    };
+    
+    NSData *deletionEntriesJsonData = [NSJSONSerialization dataWithJSONObject:resultDictionary options:NULL error:nil];
     NSString *deletionEntriesJsonString = [[NSString alloc] initWithData:deletionEntriesJsonData encoding:NSUTF8StringEncoding];
     return deletionEntriesJsonString;
 }
