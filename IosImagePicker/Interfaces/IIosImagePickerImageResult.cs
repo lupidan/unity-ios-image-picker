@@ -11,10 +11,10 @@ namespace IosImagePicker.Interfaces
         Rect CropRect { get; }
         
         /// <summary>
-        /// Original image file URL.
-        /// Contains the file URL of the image returned by UIImagePickerControllerOriginalImage that was saved in the temp folder.
+        /// Original image file path.
+        /// On iOS, it contains the file path of the image returned by UIImagePickerControllerOriginalImage that was saved in the temp folder.
         /// </summary>
-        string OriginalImageFileUrl { get; }
+        string OriginalImageFilePath { get; }
         
         /// <summary>
         /// Error if there was some problem while retrieving the original image file.
@@ -22,10 +22,10 @@ namespace IosImagePicker.Interfaces
         IIosError OriginalImageError { get; }
         
         /// <summary>
-        /// Edited image file URL if image picker allowed editing. 
-        /// Contains the file URL of the image returned by UIImagePickerControllerEditedImage that was saved in the temp folder.
+        /// Edited image file path if image picker allowed editing. 
+        /// On iOS, it contains the file path of the image returned by UIImagePickerControllerEditedImage that was saved in the temp folder.
         /// </summary>
-        string EditedImageFileUrl { get; }
+        string EditedImageFilePath { get; }
         
         /// <summary>
         /// Error if there was some problem while retrieving the edited image file.
@@ -33,10 +33,10 @@ namespace IosImagePicker.Interfaces
         IIosError EditedImageError { get; }
         
         /// <summary>
-        /// Image file URL as returned from iOS 11 Onwards.
-        /// Contains the file url returned by UIImagePickerControllerImageURL.
+        /// Image file path as returned from iOS 11 Onwards.
+        /// On iOS, it contains the file path returned by UIImagePickerControllerImageURL, that was copied in the temp folder.
         /// </summary>
-        string ImageFileUrl { get; }
+        string ImageFilePath { get; }
         
         /// <summary>
         /// Error if there was some problem while retrieving the image file.

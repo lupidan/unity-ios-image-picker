@@ -124,6 +124,71 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     return pluginTempDirectoryUrl;
 }
 
+- (NSString *) cleanupTempFolder:(BOOL)preview
+{
+    NSURL *mainTempDirectoryUrl = [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
+    NSURL *pluginTempDirectoryUrl = [mainTempDirectoryUrl URLByAppendingPathComponent:@"UnityIosImagePicker/" isDirectory:YES];
+    NSDirectoryEnumerator<NSURL *> *enumerator = [[NSFileManager defaultManager] enumeratorAtURL:pluginTempDirectoryUrl
+                                                                      includingPropertiesForKeys:@[NSURLFileAllocatedSizeKey, NSURLIsDirectoryKey]
+                                                                                         options:NULL
+                                                                                    errorHandler:nil];
+    NSMutableArray *deletionEntries = [NSMutableArray array];
+    NSError *error;
+    for (NSURL *fileUrl in enumerator)
+    {
+        NSMutableDictionary *deletionEntryDictionary = [NSMutableDictionary dictionary];
+        [deletionEntryDictionary setObject:[fileUrl path] forKey:@"_path"];
+        
+        NSNumber *isDirectoryNumber = nil;
+        [fileUrl getResourceValue:&isDirectoryNumber forKey:NSURLIsDirectoryKey error:&error];
+        if (isDirectoryNumber)
+        {
+            [deletionEntryDictionary setObject:[fileUrl path] forKey:@"_isDirectory"];
+        }
+        else if (error)
+        {
+            NSLog(@"Failed to get NSURLIsDirectoryKey attribute for %@ :: %@", [fileUrl path], error);
+        }
+
+        NSNumber *fileSizeNumber = nil;
+        [fileUrl getResourceValue:&fileSizeNumber forKey:NSURLFileAllocatedSizeKey error:&error];
+        if (fileSizeNumber)
+        {
+            [deletionEntryDictionary setObject:fileSizeNumber forKey:@"_fileSize"];
+        }
+        else if (error)
+        {
+            NSLog(@"Failed to get NSURLFileAllocatedSizeKey attribute for %@ :: %@", [fileUrl path], error);
+        }
+        
+        if (isDirectoryNumber && ![isDirectoryNumber boolValue])
+        {
+            if (preview)
+            {
+                [deletionEntryDictionary setObject:@YES forKey:@"_wouldDelete"];
+            }
+            else
+            {
+                BOOL deleted = [[NSFileManager defaultManager] removeItemAtURL:fileUrl error:&error];
+                if (deleted)
+                {
+                    [deletionEntryDictionary setObject:@YES forKey:@"_deleted"];
+                }
+                else if (error)
+                {
+                    NSLog(@"Failed to remove file at %@ :: %@", [fileUrl path], error);
+                }
+            }
+        }
+        
+        [deletionEntries addObject:[NSDictionary dictionaryWithDictionary:deletionEntryDictionary]];
+    }
+
+    NSData *deletionEntriesJsonData = [NSJSONSerialization dataWithJSONObject:[NSArray arrayWithArray:deletionEntries] options:NULL error:nil];
+    NSString *deletionEntriesJsonString = [[NSString alloc] initWithData:deletionEntriesJsonData encoding:NSUTF8StringEncoding];
+    return deletionEntriesJsonString;
+}
+
 - (NSURL *) writeImageToTempFolder:(UIImage *)image error:(NSError **)error
 {
     if (!image)
@@ -161,7 +226,9 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
         return nil;
     }
     
-    NSURL *copiedFileUrl = [pluginTempDirectoryUrl URLByAppendingPathComponent:[fileUrl lastPathComponent]];
+    NSString *extension = [fileUrl pathExtension];
+    NSString *copiedMediaFilename = [NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], extension];
+    NSURL *copiedFileUrl = [pluginTempDirectoryUrl URLByAppendingPathComponent:copiedMediaFilename];
     BOOL copySuccess = [[NSFileManager defaultManager] copyItemAtURL:fileUrl toURL:copiedFileUrl error:error];
     if (!copySuccess || *error)
     {
@@ -192,14 +259,14 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     UIImage *originalImage = [info objectForKey:UIImagePickerControllerOriginalImage];
     [self writeImageToTempFolder:originalImage
 andSaveResultIntoPayloadDictionary:imageResultPayloadDictionary
-                  withFileUrlKey:@"_originalImageFileUrl"
+                 withFilePathKey:@"_originalImageFilePath"
                         errorKey:@"_originalImageError"
                   andHasErrorKey:@"_hasOriginalImageError"];
     
     UIImage *editedImage = [info objectForKey:UIImagePickerControllerEditedImage];
     [self writeImageToTempFolder:editedImage
 andSaveResultIntoPayloadDictionary:imageResultPayloadDictionary
-                  withFileUrlKey:@"_editedImageFileUrl"
+                 withFilePathKey:@"_editedImageFilePath"
                         errorKey:@"_editedImageError"
                   andHasErrorKey:@"_hasEditedImageError"];
     
@@ -212,7 +279,7 @@ andSaveResultIntoPayloadDictionary:imageResultPayloadDictionary
     #endif
     [self copyMediaInFileUrlToTempFolder:imageUrl
       andSaveResultIntoPayloadDictionary:imageResultPayloadDictionary
-                          withFileUrlKey:@"_imageFileUrl"
+                         withFilePathKey:@"_imageFilePath"
                                 errorKey:@"_imageFileError"
                           andHasErrorKey:@"_hasImageFileError"];
     
@@ -238,9 +305,9 @@ andSaveResultIntoPayloadDictionary:imageResultPayloadDictionary
     NSURL *movieFileUrl = [info objectForKey:UIImagePickerControllerMediaURL];
     [self copyMediaInFileUrlToTempFolder:movieFileUrl
       andSaveResultIntoPayloadDictionary:movieResultPayloadDictionary
-                          withFileUrlKey:@"_movieFileUrl"
-                                errorKey:@"_movieFileUrlError"
-                          andHasErrorKey:@"_hasMovieFileUrlError"];
+                         withFilePathKey:@"_movieFilePath"
+                                errorKey:@"_movieFileError"
+                          andHasErrorKey:@"_hasMovieFileError"];
     
     if ([movieResultPayloadDictionary count] > 0)
     {
@@ -291,7 +358,7 @@ andSaveResultIntoPayloadDictionary:imageResultPayloadDictionary
 
 - (void) writeImageToTempFolder:(UIImage *)image
 andSaveResultIntoPayloadDictionary:(NSMutableDictionary *)payloadDictionary
-                 withFileUrlKey:(NSString *)fileUrlKey
+                withFilePathKey:(NSString *)filePathKey
                        errorKey:(NSString *)errorKey
                  andHasErrorKey:(NSString *)hasErrorKey
 {
@@ -302,13 +369,13 @@ andSaveResultIntoPayloadDictionary:(NSMutableDictionary *)payloadDictionary
     
     NSError *writeError = nil;
     NSURL *imageFileUrl = [self writeImageToTempFolder:image error:&writeError];
-    [self saveString:[imageFileUrl absoluteString] intoPayloadDictionary:payloadDictionary withKey:fileUrlKey];
+    [self saveString:[imageFileUrl path] intoPayloadDictionary:payloadDictionary withKey:filePathKey];
     [self saveError:writeError intoPayloadDictionary:payloadDictionary withErrorKey:errorKey andHasErrorKey:hasErrorKey];
 }
 
 - (void) copyMediaInFileUrlToTempFolder:(NSURL *)originalMediaFileUrl
      andSaveResultIntoPayloadDictionary:(NSMutableDictionary *)payloadDictionary
-                         withFileUrlKey:(NSString *)fileUrlKey
+                        withFilePathKey:(NSString *)filePathKey
                                errorKey:(NSString *)errorKey
                          andHasErrorKey:(NSString *)hasErrorKey
 {
@@ -319,7 +386,7 @@ andSaveResultIntoPayloadDictionary:(NSMutableDictionary *)payloadDictionary
     
     NSError *copyError = nil;
     NSURL *copiedMediaFileUrl = [self copyMediaInFileUrlToTempFolder:originalMediaFileUrl error:&copyError];
-    [self saveString:[copiedMediaFileUrl absoluteString] intoPayloadDictionary:payloadDictionary withKey:fileUrlKey];
+    [self saveString:[copiedMediaFileUrl path] intoPayloadDictionary:payloadDictionary withKey:filePathKey];
     [self saveError:copyError intoPayloadDictionary:payloadDictionary withErrorKey:errorKey andHasErrorKey:hasErrorKey];
 }
 
@@ -532,6 +599,12 @@ const char* UnityIosImagePickerController_AvailableCaptureModesForCameraDevice(i
 bool UnityIosImagePickerController_IsFlashAvailableForCameraDevice(int cameraDevice)
 {
     return [UIImagePickerController isFlashAvailableForCameraDevice:cameraDevice];
+}
+
+const char* UnityIosImagePickerController_CleanupTempFolder(bool preview)
+{
+    NSString *deletionEntriesJson = [[UnityIosImagePickerController defaultController] cleanupTempFolder:preview ? YES : NO];
+    return UnityIosImagePickerController_CopyString([deletionEntriesJson UTF8String]);
 }
 
 void UnityIosImagePickerController_Present(

@@ -9,31 +9,31 @@ namespace IosImagePicker.IOS.NativeMessages
     {
         public bool _hasCropRect;
         public NativeCoreGraphicsRect _cropRect;
-        public string _originalImageFileUrl;
+        public string _originalImageFilePath;
         public bool _hasOriginalImageError;
         public NativeError _originalImageError;
-        public string _editedImageFileUrl;
+        public string _editedImageFilePath;
         public bool _hasEditedImageError;
         public NativeError _editedImageError;
-        public string _imageFileUrl;
+        public string _imageFilePath;
         public bool _hasImageFileError;
         public NativeError _imageFileError;
         
         public Rect CropRect { get; private set; }
-        public string OriginalImageFileUrl { get { return this._originalImageFileUrl; } }
+        public string OriginalImageFilePath { get { return this._originalImageFilePath; } }
         public IIosError OriginalImageError { get { return this._originalImageError; } }
-        public string EditedImageFileUrl { get { return this._editedImageFileUrl; } }
+        public string EditedImageFilePath { get { return this._editedImageFilePath; } }
         public IIosError EditedImageError { get { return this._editedImageError; } }
-        public string ImageFileUrl { get { return this._imageFileUrl; } }
+        public string ImageFilePath { get { return this._imageFilePath; } }
         public IIosError ImageError { get { return this._imageFileError; } }
 
         public void OnBeforeSerialize() { }
 
         public void OnAfterDeserialize()
         {
-            NativeSerializationTools.FixSerializationForString(ref this._originalImageFileUrl);
-            NativeSerializationTools.FixSerializationForString(ref this._editedImageFileUrl);
-            NativeSerializationTools.FixSerializationForString(ref this._imageFileUrl);
+            NativeSerializationTools.FixSerializationForString(ref this._originalImageFilePath);
+            NativeSerializationTools.FixSerializationForString(ref this._editedImageFilePath);
+            NativeSerializationTools.FixSerializationForString(ref this._imageFilePath);
             NativeSerializationTools.FixSerializationForObject(ref this._originalImageError, this._hasOriginalImageError);
             NativeSerializationTools.FixSerializationForObject(ref this._editedImageError, this._hasEditedImageError);
             NativeSerializationTools.FixSerializationForObject(ref this._imageFileError, this._hasImageFileError);

@@ -7,19 +7,19 @@ namespace IosImagePicker.IOS.NativeMessages
     [Serializable]
     public class NativeIosImagePickerMovieResult : IIosImagePickerMovieResult, ISerializationCallbackReceiver
     {
-        public string _movieFileUrl;
-        public bool _hasMovieFileUrlError;
-        public NativeError _movieFileUrlError;
+        public string _movieFilePath;
+        public bool _hasMovieFileError;
+        public NativeError _movieFileError;
 
-        public string MovieFileUrl { get { return this._movieFileUrl; } }
-        public IIosError MovieFileError { get { return this._movieFileUrlError; }  }
+        public string MovieFilePath { get { return this._movieFilePath; } }
+        public IIosError MovieFileError { get { return this._movieFileError; }  }
 
         public void OnBeforeSerialize() { }
 
         public void OnAfterDeserialize()
         {
-            NativeSerializationTools.FixSerializationForString(ref this._movieFileUrl);
-            NativeSerializationTools.FixSerializationForObject(ref this._movieFileUrlError, this._hasMovieFileUrlError);
+            NativeSerializationTools.FixSerializationForString(ref this._movieFilePath);
+            NativeSerializationTools.FixSerializationForObject(ref this._movieFileError, this._hasMovieFileError);
         }
     }
 }

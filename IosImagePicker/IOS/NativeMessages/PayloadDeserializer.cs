@@ -9,5 +9,10 @@ namespace IosImagePicker.IOS.NativeMessages
         {
             return JsonUtility.FromJson<NativeIosImagePickerResult>(payload);
         }
+
+        public IIosImagePickerDeletionEntry[] DeserializeIosImagePickerEntries(string payload)
+        {
+            return JsonUtility.FromJson<IIosImagePickerDeletionEntry[]>(payload);
+        }
     }
 }

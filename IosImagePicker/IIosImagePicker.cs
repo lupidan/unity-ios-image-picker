@@ -7,41 +7,6 @@ namespace IosImagePicker
     public interface IIosImagePicker
     {
         /// <summary>
-        /// Returns a Boolean value indicating whether the device supports picking media using the specified source type.
-        /// </summary>
-        /// <param name="sourceType">The source to use to pick an image or movie.</param>
-        /// <returns><c>true</c> if the device supports the specified source type, <c>false</c> if the specified source type is not available.</returns>
-        bool IsSourceTypeAvailable(IosImagePickerSourceType sourceType);
-
-        /// <summary>
-        /// Returns a Boolean value that indicates whether a given camera is available.
-        /// </summary>
-        /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera whose availability you want to check.</param>
-        /// <returns><c>true</c> if the camera indicated by cameraDevice is available, or <c>false</c> if it is not available.</returns>
-        bool IsCameraDeviceAvailable(IosImagePickerCameraDevice cameraDevice);
-
-        /// <summary>
-        /// Returns an array of the available media types for the specified source type.
-        /// </summary>
-        /// <param name="sourceType">The source to use to pick an image.</param>
-        /// <returns>An array whose elements identify the available media types for the specified source type.</returns>
-        string[] AvailableMediaTypesForSourceType(IosImagePickerSourceType sourceType);
-
-        /// <summary>
-        /// Returns an array of IosImagePickerVideoCaptureMode indicating the capture modes supported by a given camera device.
-        /// </summary>
-        /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera you want to interrogate.</param>
-        /// <returns>An array of IosImagePickerVideoCaptureMode indicating the capture modes supported by cameraDevice.</returns>
-        IosImagePickerCameraCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice);
-
-        /// <summary>
-        /// Indicates whether a given camera has flash illumination capability.
-        /// </summary>
-        /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera whose flash capability you want to know.</param>
-        /// <returns><c>true</c> if cameraDevice can use flash illumination, or <c>false</c> if it cannot.</returns>
-        bool IsFlashAvailableForCameraDevice(IosImagePickerCameraDevice cameraDevice);
-        
-        /// <summary>
         /// The abstract media type identifier for image.
         /// </summary>
         string MediaTypeImage { get; }
@@ -101,5 +66,12 @@ namespace IosImagePicker
         /// Updates the picker controller to execute the result callbacks in a controlled context.
         /// </summary>
         void Update();
+
+        /// <summary>
+        /// Cleanup the temp plugin folder, and returns a list of deletion entries for further information.
+        /// </summary>
+        /// <param name="preview">If set to true, no deletion will happen. Use this to get a preview of what files would be deleted.</param>
+        /// <returns>List of deletion entries with details about the cleanup process.</returns>
+        IIosImagePickerDeletionEntry[] CleanPluginFolder(bool preview);
     }
 }

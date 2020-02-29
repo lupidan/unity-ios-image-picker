@@ -5,12 +5,10 @@ using IosImagePicker;
 using IosImagePicker.Enums;
 using UnityEngine;
 using UnityEngine.UI;
-using IosImagePicker;
 using IosImagePicker.Interfaces;
 using IosImagePicker.IOS.NativeMessages;
 using System.IO;
 using System.Text;
-using IosImagePicker = IosImagePicker.IosImagePicker;
 
 public class TestMenu : MonoBehaviour
 {
@@ -63,8 +61,13 @@ public class TestMenu : MonoBehaviour
 
     private void Start()
     {
-        var payloadDeserializer = new PayloadDeserializer();
-        var iosImagePicker = new global::IosImagePicker.IosImagePicker(payloadDeserializer);
+        var iosImagePicker = default(IIosImagePicker);
+        if (NativeIosImagePicker.IsCurrentPlatformSupported)
+        {
+            var payloadDeserializer = new PayloadDeserializer();
+            iosImagePicker = new NativeIosImagePicker(payloadDeserializer);    
+        }
+        
         var interfaceControllers = new List<IInterfaceController>();
         
         var sourceTypeDropdownController = SetupSourceTypeDropdown(iosImagePicker, this.sourceTypeRowGameObject, this.sourceTypeDropdown);
@@ -120,13 +123,19 @@ public class TestMenu : MonoBehaviour
             IosImagePickerSourceType.SavedPhotosAlbum,
         };
         
+        var valueVisibilityFilter = default(Func<IosImagePickerSourceType, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = NativeIosImagePicker.IsSourceTypeAvailable;
+        }
+        
         var dropdownController = new DropdownController<IosImagePickerSourceType>(
             allSourceTypes,
             rowGameObject,
             dropdown,
             () => iosImagePicker.SourceType,
             sourceType => iosImagePicker.SourceType = sourceType,
-            sourceType => iosImagePicker.IsSourceTypeAvailable(sourceType));
+            valueVisibilityFilter);
         
         dropdownController.Setup();
         return dropdownController;
@@ -142,6 +151,12 @@ public class TestMenu : MonoBehaviour
             IosImagePickerCameraDevice.Front,
             IosImagePickerCameraDevice.Rear,
         };
+        
+        var valueVisibilityFilter = default(Func<IosImagePickerCameraDevice, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = NativeIosImagePicker.IsCameraDeviceAvailable;
+        }
 
         var dropdownController = new DropdownController<IosImagePickerCameraDevice>(
             allCameraDevices,
@@ -149,7 +164,7 @@ public class TestMenu : MonoBehaviour
             dropdown,
             () => iosImagePicker.CameraDevice,
             cameraDevice => iosImagePicker.CameraDevice = cameraDevice,
-            cameraDevice => iosImagePicker.IsCameraDeviceAvailable(cameraDevice));
+            valueVisibilityFilter);
         
         dropdownController.Setup();
         return dropdownController;
@@ -166,6 +181,17 @@ public class TestMenu : MonoBehaviour
             IosImagePickerCameraCaptureMode.Photo,
             IosImagePickerCameraCaptureMode.Video,
         };
+        
+        var valueVisibilityFilter = default(Func<IosImagePickerCameraCaptureMode, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = captureMode =>
+            {
+                var currentCameraDevice = iosImagePicker.CameraDevice;
+                var availableCaptureModes = NativeIosImagePicker.AvailableCaptureModesForCameraDevice(currentCameraDevice);
+                return availableCaptureModes != null && Array.IndexOf(availableCaptureModes, captureMode) > -1;
+            };
+        }
 
         var dropdownController = new DropdownController<IosImagePickerCameraCaptureMode>(
             allCaptureModes,
@@ -173,12 +199,7 @@ public class TestMenu : MonoBehaviour
             dropdown,
             () => iosImagePicker.CameraCaptureMode,
             captureMode => iosImagePicker.CameraCaptureMode = captureMode,
-            captureMode =>
-            {
-                var currentCameraDevice = iosImagePicker.CameraDevice;
-                var availableCaptureModes = iosImagePicker.AvailableCaptureModesForCameraDevice(currentCameraDevice);
-                return availableCaptureModes != null && Array.IndexOf(availableCaptureModes, captureMode) > -1;
-            });
+            valueVisibilityFilter);
         
         dropdownController.Setup();
         cameraDeviceDropdownController.AddDependantController(dropdownController);
@@ -197,6 +218,16 @@ public class TestMenu : MonoBehaviour
             IosImagePickerCameraFlashMode.On,
             IosImagePickerCameraFlashMode.Off,
         };
+        
+        var valueVisibilityFilter = default(Func<IosImagePickerCameraFlashMode, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = flashMode =>
+            {
+                var currentCameraDevice = iosImagePicker.CameraDevice;
+                return flashMode != IosImagePickerCameraFlashMode.On || NativeIosImagePicker.IsFlashAvailableForCameraDevice(currentCameraDevice);
+            };
+        }
 
         var dropdownController = new DropdownController<IosImagePickerCameraFlashMode>(
             allFlashModes,
@@ -204,11 +235,7 @@ public class TestMenu : MonoBehaviour
             dropdown,
             () => iosImagePicker.CameraFlashMode,
             flashMode => iosImagePicker.CameraFlashMode = flashMode,
-            flashMode =>
-            {
-                var currentCameraDevice = iosImagePicker.CameraDevice;
-                return flashMode != IosImagePickerCameraFlashMode.On || iosImagePicker.IsFlashAvailableForCameraDevice(currentCameraDevice);
-            });
+            valueVisibilityFilter);
 
         dropdownController.Setup();
         cameraDeviceDropdownController.AddDependantController(dropdownController);
@@ -253,6 +280,16 @@ public class TestMenu : MonoBehaviour
             IosImagePickerVideoQualityType.IFrame1280x720,
             IosImagePickerVideoQualityType.IFrame960x540,
         };
+        
+        var valueVisibilityFilter = default(Func<IosImagePickerVideoQualityType, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = qualityType =>
+            {
+                var currentMediaTypes = iosImagePicker.MediaTypes;
+                return currentMediaTypes != null && Array.IndexOf(currentMediaTypes, iosImagePicker.MediaTypeMovie) > -1;
+            };
+        }
 
         var dropdownController = new DropdownController<IosImagePickerVideoQualityType>(
             allQualityTypes,
@@ -260,11 +297,7 @@ public class TestMenu : MonoBehaviour
             dropdown,
             () => iosImagePicker.VideoQuality,
             videoQuality => iosImagePicker.VideoQuality = videoQuality,
-            _ =>
-            {
-                var currentMediaTypes = iosImagePicker.MediaTypes;
-                return currentMediaTypes != null && Array.IndexOf(currentMediaTypes, iosImagePicker.MediaTypeMovie) > -1;
-            });
+            valueVisibilityFilter);
         
         dropdownController.Setup();
         mediaTypesToggleGroupController.AddDependantController(dropdownController);
@@ -286,17 +319,23 @@ public class TestMenu : MonoBehaviour
 
         iosImagePicker.VideoMaximumDuration = allMaxDurations[0];
         
+        var valueVisibilityFilter = default(Func<TimeSpan, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = maxDuration =>
+            {
+                var currentMediaTypes = iosImagePicker.MediaTypes;
+                return currentMediaTypes != null && Array.IndexOf(currentMediaTypes, iosImagePicker.MediaTypeMovie) > -1;
+            };
+        }
+        
         var dropdownController = new DropdownController<TimeSpan>(
             allMaxDurations,
             rowGameObject,
             dropdown,
             () => iosImagePicker.VideoMaximumDuration,
             maxDuration => iosImagePicker.VideoMaximumDuration = maxDuration,
-            _ =>
-            {
-                var currentMediaTypes = iosImagePicker.MediaTypes;
-                return currentMediaTypes != null && Array.IndexOf(currentMediaTypes, iosImagePicker.MediaTypeMovie) > -1;
-            });
+            valueVisibilityFilter);
         
         dropdownController.Setup();
         mediaTypesToggleGroupController.AddDependantController(dropdownController);
@@ -328,6 +367,16 @@ public class TestMenu : MonoBehaviour
             imageTypeToggle,
             movieTypeToggle,
         };
+        
+        var valueVisibilityFilter = default(Func<string, bool>);
+        if (iosImagePicker is NativeIosImagePicker)
+        {
+            valueVisibilityFilter = mediaType =>
+            {
+                var availableMediaTypes = NativeIosImagePicker.AvailableMediaTypesForSourceType(iosImagePicker.SourceType);
+                return availableMediaTypes != null && Array.IndexOf(availableMediaTypes, mediaType) > -1;
+            };
+        }
 
         var toggleGroupController = new ToggleGroupController<string>(
             values,
@@ -335,11 +384,7 @@ public class TestMenu : MonoBehaviour
             toggles,
             () => iosImagePicker.MediaTypes,
             mediaTypes => iosImagePicker.MediaTypes = mediaTypes,
-            mediaType =>
-            {
-                var availableMediaTypes = iosImagePicker.AvailableMediaTypesForSourceType(iosImagePicker.SourceType);
-                return availableMediaTypes != null && Array.IndexOf(availableMediaTypes, mediaType) > -1;
-            });
+            valueVisibilityFilter);
         
         toggleGroupController.Setup();
         sourceTypeDropdownController.AddDependantController(toggleGroupController);
@@ -356,28 +401,27 @@ public class TestMenu : MonoBehaviour
             stringBuilder.AppendLine("Media Metadata: " + result.MediaMetadataJson);
             if (result.Image != null)
             {
-                LogFileDetails(stringBuilder, "ImageFileUrl", result.Image.ImageFileUrl, result.Image.ImageError);
-                LogFileDetails(stringBuilder, "OriginalImageFileUrl", result.Image.OriginalImageFileUrl, result.Image.OriginalImageError);
-                LogFileDetails(stringBuilder, "EditedImageFileUrl", result.Image.EditedImageFileUrl, result.Image.EditedImageError);
+                LogFileDetails(stringBuilder, "ImageFilePath", result.Image.ImageFilePath, result.Image.ImageError);
+                LogFileDetails(stringBuilder, "OriginalImageFilePath", result.Image.OriginalImageFilePath, result.Image.OriginalImageError);
+                LogFileDetails(stringBuilder, "EditedImageFilePath", result.Image.EditedImageFilePath, result.Image.EditedImageError);
                 stringBuilder.AppendLine("CropRect: " + result.Image.CropRect.ToString());
             }
 
             if (result.Movie != null)
             {
-                LogFileDetails(stringBuilder, "MovieFileUrl", result.Movie.MovieFileUrl, result.Movie.MovieFileError);
+                LogFileDetails(stringBuilder, "MovieFilePath", result.Movie.MovieFilePath, result.Movie.MovieFileError);
             }
             
             Debug.Log(stringBuilder.ToString());
         });
     }
 
-    private static void LogFileDetails(StringBuilder stringBuilder, string fieldName, string fieldFileUrlValue, IIosError error)
+    private static void LogFileDetails(StringBuilder stringBuilder, string fieldName, string fieldFilePath, IIosError error)
     {
-        stringBuilder.AppendLine(fieldName + ": " + fieldFileUrlValue);
-        if (fieldFileUrlValue != null)
+        stringBuilder.AppendLine(fieldName + ": " + fieldFilePath);
+        if (fieldFilePath != null)
         {
-            var uri = new Uri(fieldFileUrlValue);
-            var fileInfo = new FileInfo(uri.AbsolutePath);
+            var fileInfo = new FileInfo(fieldFilePath);
             stringBuilder.AppendLine(fieldName + " Exists: " + fileInfo.Exists);
             stringBuilder.AppendLine(fieldName + " Size: " + fileInfo.Length);
         }
@@ -389,4 +433,42 @@ public class TestMenu : MonoBehaviour
             stringBuilder.AppendLine(fieldName + " Error Localized Description: " + error.LocalizedDescription);
         }
     }
+
+    public void CleanupPluginFolderWithoutPreview()
+    {
+        this.CleanupPluginFolder(false);
+    }
+    
+    public void CleanupPluginFolderWithPreview()
+    {
+        this.CleanupPluginFolder(true);
+    }
+
+    private void CleanupPluginFolder(bool preview)
+    {
+        if (this._iosImagePicker == null)
+        {
+            return;            
+        }
+
+        var deletionEntries = this._iosImagePicker.CleanPluginFolder(preview);
+        var stringBuilder = new StringBuilder("CLEANUP:\n");
+        for (var i = 0; i < deletionEntries.Length; i++)
+        {
+            var deletionEntry = deletionEntries[i];
+            var allDetails = new[]
+            {
+                deletionEntry.Path,
+                deletionEntry.FileSize + " bytes",
+                deletionEntry.IsDirectory ? "Is a Directory" : "Not a Directory",
+                deletionEntry.WouldDelete ? "Would Be Deleted" : "",
+                deletionEntry.Deleted ? "Deleted" : "",
+            };
+
+            stringBuilder.AppendLine(string.Join(" ", allDetails));
+        }
+        
+        Debug.Log(stringBuilder.ToString());
+    }
+    
 }

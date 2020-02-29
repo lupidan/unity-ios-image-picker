@@ -1,6 +1,6 @@
 ﻿#if !UNITY_EDITOR && UNITY_IOS
-#define IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
 #endif
+#define IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
 
 using System;
 using IosImagePicker.Enums;
@@ -8,15 +8,30 @@ using IosImagePicker.Interfaces;
 
 namespace IosImagePicker
 {
-    public class IosImagePicker : IIosImagePicker
+    public class NativeIosImagePicker : IIosImagePicker
     {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
         private const char SerializationSeparator = '#';
-        
-        private readonly IPayloadDeserializer _payloadDeserializer;
 #endif
-        
-        public bool IsSourceTypeAvailable(IosImagePickerSourceType sourceType)
+
+        public static bool IsCurrentPlatformSupported
+        {
+            get
+            {
+#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+                return true;
+#else
+                return false;
+#endif                
+            }
+        }
+
+        /// <summary>
+        /// Returns a Boolean value indicating whether the device supports picking media using the specified source type.
+        /// </summary>
+        /// <param name="sourceType">The source to use to pick an image or movie.</param>
+        /// <returns><c>true</c> if the device supports the specified source type, <c>false</c> if the specified source type is not available.</returns>
+        public static bool IsSourceTypeAvailable(IosImagePickerSourceType sourceType)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             return PInvoke.UnityIosImagePickerController_IsSourceTypeAvailable(sourceType);
@@ -25,7 +40,12 @@ namespace IosImagePicker
 #endif
         }
 
-        public bool IsCameraDeviceAvailable(IosImagePickerCameraDevice cameraDevice)
+        /// <summary>
+        /// Returns a Boolean value that indicates whether a given camera is available.
+        /// </summary>
+        /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera whose availability you want to check.</param>
+        /// <returns><c>true</c> if the camera indicated by cameraDevice is available, or <c>false</c> if it is not available.</returns>
+        public static bool IsCameraDeviceAvailable(IosImagePickerCameraDevice cameraDevice)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             return PInvoke.UnityIosImagePickerController_IsCameraDeviceAvailable(cameraDevice);
@@ -34,7 +54,12 @@ namespace IosImagePicker
 #endif
         }
 
-        public string[] AvailableMediaTypesForSourceType(IosImagePickerSourceType sourceType)
+        /// <summary>
+        /// Returns an array of the available media types for the specified source type.
+        /// </summary>
+        /// <param name="sourceType">The source to use to pick an image.</param>
+        /// <returns>An array whose elements identify the available media types for the specified source type.</returns>
+        public static string[] AvailableMediaTypesForSourceType(IosImagePickerSourceType sourceType)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             var serializedMediaTypes = PInvoke.UnityIosImagePickerController_AvailableMediaTypesForSourceType(sourceType);
@@ -44,7 +69,12 @@ namespace IosImagePicker
 #endif
         }
 
-        public IosImagePickerCameraCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice)
+        /// <summary>
+        /// Returns an array of IosImagePickerVideoCaptureMode indicating the capture modes supported by a given camera device.
+        /// </summary>
+        /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera you want to interrogate.</param>
+        /// <returns>An array of IosImagePickerVideoCaptureMode indicating the capture modes supported by cameraDevice.</returns>
+        public static IosImagePickerCameraCaptureMode[] AvailableCaptureModesForCameraDevice(IosImagePickerCameraDevice cameraDevice)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             var serializedCaptureModes = PInvoke.UnityIosImagePickerController_AvailableCaptureModesForCameraDevice(cameraDevice);
@@ -66,7 +96,12 @@ namespace IosImagePicker
 #endif
         }
 
-        public bool IsFlashAvailableForCameraDevice(IosImagePickerCameraDevice cameraDevice)
+        /// <summary>
+        /// Indicates whether a given camera has flash illumination capability.
+        /// </summary>
+        /// <param name="cameraDevice">A IosImagePickerCameraDevice constant indicating the camera whose flash capability you want to know.</param>
+        /// <returns><c>true</c> if cameraDevice can use flash illumination, or <c>false</c> if it cannot.</returns>
+        public static bool IsFlashAvailableForCameraDevice(IosImagePickerCameraDevice cameraDevice)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             return PInvoke.UnityIosImagePickerController_IsFlashAvailableForCameraDevice(cameraDevice);
@@ -85,8 +120,12 @@ namespace IosImagePicker
         public IosImagePickerCameraDevice CameraDevice { get; set; }
         public IosImagePickerCameraCaptureMode CameraCaptureMode { get; set; }
         public IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
+        
+#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+        private readonly IPayloadDeserializer _payloadDeserializer;
+#endif
 
-        public IosImagePicker(IPayloadDeserializer payloadDeserializer)
+        public NativeIosImagePicker(IPayloadDeserializer payloadDeserializer)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             this._payloadDeserializer = payloadDeserializer;
@@ -140,6 +179,14 @@ namespace IosImagePicker
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             CallbackHandler.ExecutePendingCallbacks();
+#endif
+        }
+
+        public IIosImagePickerDeletionEntry[] CleanPluginFolder(bool preview)
+        {
+#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+            var jsonPayload = PInvoke.UnityIosImagePickerController_CleanupTempFolder(preview);
+            return this._payloadDeserializer.DeserializeIosImagePickerEntries(jsonPayload);
 #endif
         }
 
@@ -256,6 +303,9 @@ namespace IosImagePicker
             [System.Runtime.InteropServices.DllImport("__Internal")]
             public static extern bool UnityIosImagePickerController_IsFlashAvailableForCameraDevice(
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraDevice cameraDevice);
+
+            [System.Runtime.InteropServices.DllImport("__Internal")]
+            public static extern string UnityIosImagePickerController_CleanupTempFolder(bool preview);
             
             [System.Runtime.InteropServices.DllImport("__Internal")]
             public static extern void UnityIosImagePickerController_Present(
