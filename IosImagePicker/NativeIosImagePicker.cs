@@ -109,6 +109,21 @@ namespace IosImagePicker
             return false;
 #endif
         }
+        
+        /// <summary>
+        /// Cleanup the temp plugin folder, and returns details about the cleanup.
+        /// </summary>
+        /// <param name="preview">If set to true, no deletion will happen. Use this to get a preview of what files would be deleted.</param>
+        /// <returns>Result of the cleanup process with with all the details.</returns>
+        public static IIosImagePickerCleanupResult CleanupPluginFolder(bool preview)
+        {
+#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+            var jsonPayload = PInvoke.UnityIosImagePickerController_CleanupTempFolder(preview);
+            return this._payloadDeserializer.DeserializeIosImageCleanupResult(jsonPayload);
+#else
+            return null;
+#endif
+        }
 
         public string MediaTypeImage { get; private set; }
         public string MediaTypeMovie { get; private set; }
@@ -179,16 +194,6 @@ namespace IosImagePicker
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             CallbackHandler.ExecutePendingCallbacks();
-#endif
-        }
-
-        public IIosImagePickerCleanupResult CleanupPluginFolder(bool preview)
-        {
-#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
-            var jsonPayload = PInvoke.UnityIosImagePickerController_CleanupTempFolder(preview);
-            return this._payloadDeserializer.DeserializeIosImageCleanupResult(jsonPayload);
-#else
-            return null;
 #endif
         }
 

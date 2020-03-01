@@ -446,12 +446,7 @@ public class TestMenu : MonoBehaviour
 
     private void CleanupPluginFolder(bool preview)
     {
-        if (this._iosImagePicker == null)
-        {
-            return;            
-        }
-
-        var cleanupResult = this._iosImagePicker.CleanupPluginFolder(preview);
+        var cleanupResult = NativeIosImagePicker.CleanupPluginFolder(preview);
         if (cleanupResult == null || cleanupResult.DeletionEntries == null)
         {
             return;
