@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace IosImagePicker.IOS.NativeMessages
 {
-    public class PayloadDeserializer : IPayloadDeserializer
+    public static class NativePayloadDeserializer
     {
-        public IIosImagePickerResult DeserializeIosImagePickerResult(string payload)
+        public static IIosImagePickerResult DeserializeIosImagePickerResult(string payload)
         {
             return JsonUtility.FromJson<NativeIosImagePickerResult>(payload);
         }
 
-        public IIosImagePickerCleanupResult DeserializeIosImageCleanupResult(string payload)
+        public static IIosImagePickerCleanupResult DeserializeIosImageCleanupResult(string payload)
         {
             return JsonUtility.FromJson<NativeIosImagePickerCleanupResult>(payload);
         }

@@ -6,6 +6,10 @@ using System;
 using IosImagePicker.Enums;
 using IosImagePicker.Interfaces;
 
+#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
+using IosImagePicker.IOS.NativeMessages;
+#endif
+
 namespace IosImagePicker
 {
     public class NativeIosImagePicker : IIosImagePicker
@@ -119,7 +123,7 @@ namespace IosImagePicker
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             var jsonPayload = PInvoke.UnityIosImagePickerController_CleanupTempFolder(preview);
-            return this._payloadDeserializer.DeserializeIosImageCleanupResult(jsonPayload);
+            return NativePayloadDeserializer.DeserializeIosImageCleanupResult(jsonPayload);
 #else
             return null;
 #endif
@@ -135,15 +139,10 @@ namespace IosImagePicker
         public IosImagePickerCameraDevice CameraDevice { get; set; }
         public IosImagePickerCameraCaptureMode CameraCaptureMode { get; set; }
         public IosImagePickerCameraFlashMode CameraFlashMode { get; set; }
-        
-#if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
-        private readonly IPayloadDeserializer _payloadDeserializer;
-#endif
 
-        public NativeIosImagePicker(IPayloadDeserializer payloadDeserializer)
+        public NativeIosImagePicker()
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
-            this._payloadDeserializer = payloadDeserializer;
             this.MediaTypeImage = PInvoke.UnityIosImagePickerController_GetMediaTypeImage();
             this.MediaTypeMovie = PInvoke.UnityIosImagePickerController_GetMediaTypeMovie();
 #else
@@ -165,7 +164,7 @@ namespace IosImagePicker
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             var requestId = CallbackHandler.AddCallback(payload =>
             {
-                var result = this._payloadDeserializer.DeserializeIosImagePickerResult(payload);
+                var result = NativePayloadDeserializer.DeserializeIosImagePickerResult(payload);
                 resultCallback.Invoke(result);
             });
 

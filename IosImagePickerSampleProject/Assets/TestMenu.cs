@@ -6,7 +6,6 @@ using IosImagePicker.Enums;
 using UnityEngine;
 using UnityEngine.UI;
 using IosImagePicker.Interfaces;
-using IosImagePicker.IOS.NativeMessages;
 using System.IO;
 using System.Text;
 
@@ -64,8 +63,7 @@ public class TestMenu : MonoBehaviour
         var iosImagePicker = default(IIosImagePicker);
         if (NativeIosImagePicker.IsCurrentPlatformSupported)
         {
-            var payloadDeserializer = new PayloadDeserializer();
-            iosImagePicker = new NativeIosImagePicker(payloadDeserializer);    
+            iosImagePicker = new NativeIosImagePicker();    
         }
         
         var interfaceControllers = new List<IInterfaceController>();
