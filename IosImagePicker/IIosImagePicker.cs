@@ -59,8 +59,9 @@ namespace IosImagePicker
         /// <summary>
         /// Presents the IosImagePicker with a result callback.
         /// </summary>
+        /// <param name="presentArgs">Struct containing extra presentation arguments.</param>
         /// <param name="resultCallback">The callback to be called when the image pickers has finished.</param>
-        void Present(Action<IIosImagePickerResult> resultCallback);
+        void Present(IosImagePickerPresentArgs presentArgs, Action<IIosImagePickerResult> resultCallback);
 
         /// <summary>
         /// Updates the picker controller to execute the result callbacks in a controlled context.

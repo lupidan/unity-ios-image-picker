@@ -27,7 +27,7 @@ namespace IosImagePicker.Editor
         private readonly List<Action> _scheduledCallbacks = new List<Action>();
         private readonly object _syncLock = new object();
         
-        public void Present(Action<IIosImagePickerResult> resultCallback)
+        public void Present(IosImagePickerPresentArgs presentArgs, Action<IIosImagePickerResult> resultCallback)
         {
             var filters = new List<string>();
             if (Array.IndexOf(this.MediaTypes, this.MediaTypeImage) != -1)

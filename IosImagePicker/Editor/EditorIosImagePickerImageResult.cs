@@ -22,13 +22,13 @@ namespace IosImagePicker.Editor
             string imageFilePath,
             EditorIosError imageError)
         {
-            CropRect = cropRect;
-            OriginalImageFilePath = originalImageFilePath;
-            OriginalImageError = originalImageError;
-            EditedImageFilePath = editedImageFilePath;
-            EditedImageError = editedImageError;
-            ImageFilePath = imageFilePath;
-            ImageError = imageError;
+            this.CropRect = cropRect;
+            this.OriginalImageFilePath = originalImageFilePath;
+            this.OriginalImageError = originalImageError;
+            this.EditedImageFilePath = editedImageFilePath;
+            this.EditedImageError = editedImageError;
+            this.ImageFilePath = imageFilePath;
+            this.ImageError = imageError;
         }
     }
 }

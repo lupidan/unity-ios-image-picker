@@ -159,7 +159,7 @@ namespace IosImagePicker
             this.CameraFlashMode = IosImagePickerCameraFlashMode.Auto;
         }
 
-        public void Present(Action<IIosImagePickerResult> resultCallback)
+        public void Present(IosImagePickerPresentArgs presentArgs, Action<IIosImagePickerResult> resultCallback)
         {
 #if IOS_IMAGE_PICKER_NATIVE_IMPLEMENTATION_AVAILABLE
             var requestId = CallbackHandler.AddCallback(payload =>
@@ -173,7 +173,7 @@ namespace IosImagePicker
                 mediaTypes = AvailableMediaTypesForSourceType(this.SourceType);
 
             var serializedMediaTypes = string.Join(SerializationSeparator.ToString(), mediaTypes);
-            
+
             PInvoke.UnityIosImagePickerController_Present(
                 requestId,
                 this.SourceType,
@@ -183,7 +183,13 @@ namespace IosImagePicker
                 this.VideoMaximumDuration.TotalSeconds,
                 this.CameraDevice,
                 this.CameraCaptureMode,
-                this.CameraFlashMode);
+                this.CameraFlashMode,
+                presentArgs.IpadPopoverPermittedArrowDirections,
+                presentArgs.IpadPopoverSourceRect.x,
+                presentArgs.IpadPopoverSourceRect.y,
+                presentArgs.IpadPopoverSourceRect.width,
+                presentArgs.IpadPopoverSourceRect.height,
+                presentArgs.IpadPopoverCanOverlapSourceRect);
 #else
             throw new Exception("Ios Image Picker not supported in this platform");
 #endif
@@ -323,7 +329,13 @@ namespace IosImagePicker
                 double videoMaximumDurationInSeconds,
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraDevice cameraDevice,
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraCaptureMode cameraCaptureMode,
-                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraFlashMode cameraFlashMode);
+                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraFlashMode cameraFlashMode, 
+                [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysUInt)]IosImagePickerPopoverArrowDirection ipadPopoverPermittedArrowDirections,
+                float ipadPopoverSourceRectX, 
+                float ipadPopoverSourceRectY, 
+                float ipadPopoverSourceRectWidth, 
+                float ipadPopoverSourceRectHeight,
+                bool ipadPopoverCanOverlapSourceRect);
         }
 #endif
     }

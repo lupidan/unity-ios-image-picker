@@ -41,6 +41,9 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
                                      cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode
+              ipadPopoverPermittedArrowDirections:(UIPopoverArrowDirection)ipadPopoverPermittedArrowDirections
+                            ipadPopoverSourceRect:(CGRect)ipadPopoverSourceRect
+                  ipadPopoverCanOverlapSourceRect:(BOOL)ipadPopoverCanOverlapSourceRect
 {
     UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
     [imagePickerController setDelegate:self];
@@ -61,9 +64,12 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     [[self requestIdsDictionary] setObject:@(requestId) forKey:imagePickerControllerValue];
     
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 130000
-    if (@available(iOS 8.0, *))
+    if (@available(iOS 8.0, macOS 13.00, *))
     {
-        [self presentImagePickerController:imagePickerController];
+        [self presentImagePickerController:imagePickerController
+       ipadPopoverPermittedArrowDirections:ipadPopoverPermittedArrowDirections
+                     ipadPopoverSourceRect:ipadPopoverSourceRect
+           ipadPopoverCanOverlapSourceRect:ipadPopoverCanOverlapSourceRect];
     }
     else
     {
@@ -75,6 +81,10 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
 }
 
 - (void) presentImagePickerController:(UIImagePickerController *)imagePickerController
+  ipadPopoverPermittedArrowDirections:(UIPopoverArrowDirection)ipadPopoverPermittedArrowDirections
+                ipadPopoverSourceRect:(CGRect)ipadPopoverSourceRect
+      ipadPopoverCanOverlapSourceRect:(BOOL)ipadPopoverCanOverlapSourceRect
+API_AVAILABLE(ios(8.0), macos(13.0))
 {
     UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     
@@ -84,8 +94,11 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
         [imagePickerController sourceType] != UIImagePickerControllerSourceTypeCamera)
     {
         [imagePickerController setModalPresentationStyle:UIModalPresentationPopover];
-        [[imagePickerController popoverPresentationController] setSourceRect:CGRectZero];
+        [[imagePickerController popoverPresentationController] setPermittedArrowDirections:ipadPopoverPermittedArrowDirections];
+        [[imagePickerController popoverPresentationController] setSourceRect:ipadPopoverSourceRect];
+        [[imagePickerController popoverPresentationController] setCanOverlapSourceViewRect:ipadPopoverCanOverlapSourceRect];
         [[imagePickerController popoverPresentationController] setSourceView:[rootViewController view]];
+        
     } else {
         [rootViewController setModalPresentationStyle:UIModalPresentationFullScreen];
     }
@@ -93,6 +106,8 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     [rootViewController presentViewController:imagePickerController animated:YES completion:nil];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void) legacyPresentImagePickerController:(UIImagePickerController *)imagePickerController
 {
     UIViewController *rootViewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
@@ -109,6 +124,7 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
         [rootViewController presentViewController:imagePickerController animated:YES completion:nil];
     }
 }
+#pragma clang diagnostic pop
 
 - (NSURL *) setupTempFolder:(NSError **)error
 {
@@ -620,10 +636,17 @@ void UnityIosImagePickerController_Present(
     double videoMaximumDurationInSeconds,
     int cameraDevice,
     int cameraCaptureMode,
-    int cameraFlashMode)
+    int cameraFlashMode,
+    uint ipadPopoverPermittedArrowDirections,
+    float ipadPopoverSourceRectX,
+    float ipadPopoverSourceRectY,
+    float ipadPopoverSourceRectWidth,
+    float ipadPopoverSourceRectHeight,
+    bool ipadPopoverCanOverlapSourceRect)
 {
     NSString *serializedMediaTypesString = [NSString stringWithUTF8String:serializedMediaTypes];
     NSArray <NSString *> *mediaTypes = [serializedMediaTypesString componentsSeparatedByString:@"#"];
+    CGRect popoverSourceRect = CGRectMake(ipadPopoverSourceRectX, ipadPopoverSourceRectY, ipadPopoverSourceRectWidth, ipadPopoverSourceRectHeight);
     UnityIosImagePickerController *defaultController = [UnityIosImagePickerController defaultController];
     [defaultController presentImagePickerControllerForRequestId:requestId
                                                      sourceType:sourceType
@@ -633,5 +656,8 @@ void UnityIosImagePickerController_Present(
                                                maxVideoDuration:videoMaximumDurationInSeconds
                                                    cameraDevice:cameraDevice
                                               cameraCaptureMode:cameraCaptureMode
-                                                      flashMode:cameraFlashMode];
+                                                      flashMode:cameraFlashMode
+                            ipadPopoverPermittedArrowDirections:ipadPopoverPermittedArrowDirections
+                                          ipadPopoverSourceRect:popoverSourceRect
+                                ipadPopoverCanOverlapSourceRect:ipadPopoverCanOverlapSourceRect ? YES : NO];
 }

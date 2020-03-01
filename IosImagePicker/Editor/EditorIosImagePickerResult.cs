@@ -17,11 +17,11 @@ namespace IosImagePicker.Editor
             EditorIosImagePickerMovieResult movie,
             string mediaMetadataJson)
         {
-            DidCancel = didCancel;
-            MediaType = mediaType;
-            Image = image;
-            Movie = movie;
-            MediaMetadataJson = mediaMetadataJson;
+            this.DidCancel = didCancel;
+            this.MediaType = mediaType;
+            this.Image = image;
+            this.Movie = movie;
+            this.MediaMetadataJson = mediaMetadataJson;
         }
     }
 }

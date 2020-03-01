@@ -13,9 +13,9 @@ namespace IosImagePicker.Editor
             string domain,
             string localizedDescription)
         {
-            Code = code;
-            Domain = domain;
-            LocalizedDescription = localizedDescription;
+            this.Code = code;
+            this.Domain = domain;
+            this.LocalizedDescription = localizedDescription;
         }
     }
 }

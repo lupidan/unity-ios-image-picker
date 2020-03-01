@@ -11,8 +11,8 @@ namespace IosImagePicker.Editor
             string movieFilePath,
             EditorIosError movieFileError)
         {
-            MovieFilePath = movieFilePath;
-            MovieFileError = movieFileError;
+            this.MovieFilePath = movieFilePath;
+            this.MovieFileError = movieFileError;
         }
     }
 }

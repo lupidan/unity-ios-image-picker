@@ -14,7 +14,10 @@ NS_ASSUME_NONNULL_BEGIN
                                  maxVideoDuration:(NSTimeInterval)maxVideoDuration
                                      cameraDevice:(UIImagePickerControllerCameraDevice)cameraDevice
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
-                                        flashMode:(UIImagePickerControllerCameraFlashMode)flashMode;
+                                        flashMode:(UIImagePickerControllerCameraFlashMode)flashMode
+              ipadPopoverPermittedArrowDirections:(UIPopoverArrowDirection)ipadPopoverPermittedArrowDirections
+                            ipadPopoverSourceRect:(CGRect)ipadPopoverSourceRect
+                  ipadPopoverCanOverlapSourceRect:(BOOL)ipadPopoverCanOverlapSourceRect;
 
 @end
 
