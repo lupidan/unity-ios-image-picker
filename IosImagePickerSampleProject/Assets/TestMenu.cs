@@ -54,6 +54,11 @@ public class TestMenu : MonoBehaviour
     private GameObject videoMaxDurationRowGameObject;
     [SerializeField]
     private Dropdown videoMaxDurationDropdown;
+    [Space]
+    [SerializeField]
+    private RectTransform topParentRectTransform;
+    [SerializeField]
+    private RectTransform presentButtonRectTransform;
 
     private IIosImagePicker _iosImagePicker;
     private List<IInterfaceController> _interfaceControllers;
@@ -61,11 +66,14 @@ public class TestMenu : MonoBehaviour
     private void Start()
     {
         var iosImagePicker = default(IIosImagePicker);
+#if UNITY_EDITOR
+        iosImagePicker = new IosImagePicker.Editor.EditorIosImagePicker(); 
+#else
         if (NativeIosImagePicker.IsCurrentPlatformSupported)
         {
             iosImagePicker = new NativeIosImagePicker();    
         }
-        
+#endif
         var interfaceControllers = new List<IInterfaceController>();
         
         var sourceTypeDropdownController = SetupSourceTypeDropdown(iosImagePicker, this.sourceTypeRowGameObject, this.sourceTypeDropdown);
@@ -391,27 +399,66 @@ public class TestMenu : MonoBehaviour
 
     public void Present()
     {
-        this._iosImagePicker.Present(result =>
-        {
-            var stringBuilder = new StringBuilder("RESULT:\n");
-            stringBuilder.AppendLine("Was Cancelled: " + result.DidCancel);
-            stringBuilder.AppendLine("Media Type: " + result.MediaType);
-            stringBuilder.AppendLine("Media Metadata: " + result.MediaMetadataJson);
-            if (result.Image != null)
+        var presentArgs = new IosImagePickerPresentArgs(
+            GetNormalizedRectForRectTransform(this.topParentRectTransform, this.presentButtonRectTransform),
+            IosImagePickerPopoverArrowDirection.Any,
+            true);
+        
+        this._iosImagePicker.Present(
+            presentArgs,
+            result =>
             {
-                LogFileDetails(stringBuilder, "ImageFilePath", result.Image.ImageFilePath, result.Image.ImageError);
-                LogFileDetails(stringBuilder, "OriginalImageFilePath", result.Image.OriginalImageFilePath, result.Image.OriginalImageError);
-                LogFileDetails(stringBuilder, "EditedImageFilePath", result.Image.EditedImageFilePath, result.Image.EditedImageError);
-                stringBuilder.AppendLine("CropRect: " + result.Image.CropRect.ToString());
-            }
+                var stringBuilder = new StringBuilder("RESULT:\n");
+                stringBuilder.AppendLine("Was Cancelled: " + result.DidCancel);
+                stringBuilder.AppendLine("Media Type: " + result.MediaType);
+                stringBuilder.AppendLine("Media Metadata: " + result.MediaMetadataJson);
+                if (result.Image != null)
+                {
+                    LogFileDetails(stringBuilder, "ImageFilePath", result.Image.ImageFilePath, result.Image.ImageError);
+                    LogFileDetails(stringBuilder, "OriginalImageFilePath", result.Image.OriginalImageFilePath, result.Image.OriginalImageError);
+                    LogFileDetails(stringBuilder, "EditedImageFilePath", result.Image.EditedImageFilePath, result.Image.EditedImageError);
+                    stringBuilder.AppendLine("CropRect: " + result.Image.CropRect.ToString());
+                }
 
-            if (result.Movie != null)
-            {
-                LogFileDetails(stringBuilder, "MovieFilePath", result.Movie.MovieFilePath, result.Movie.MovieFileError);
-            }
+                if (result.Movie != null)
+                {
+                    LogFileDetails(stringBuilder, "MovieFilePath", result.Movie.MovieFilePath, result.Movie.MovieFileError);
+                }
             
-            Debug.Log(stringBuilder.ToString());
-        });
+                Debug.Log(stringBuilder.ToString());
+            });
+    }
+
+    private static Rect GetNormalizedRectForRectTransform(RectTransform topParentRectTransform, RectTransform rectTransform)
+    {
+        var topParentRect = GetWorldRect(topParentRectTransform);
+        var rect = GetWorldRect(rectTransform);
+
+        return new Rect(rect.xMin / topParentRect.width,
+            rect.yMin / topParentRect.height,
+            rect.width / topParentRect.width,
+            rect.height / topParentRect.height);
+    }
+
+    private static Rect GetWorldRect(RectTransform rectTransform)
+    {
+        var worldCorners = new Vector3[4];
+        rectTransform.GetWorldCorners(worldCorners);
+        var minPoint = new Vector2(worldCorners[0].x, worldCorners[0].y);
+        var maxPoint = new Vector2(worldCorners[0].x, worldCorners[0].y);
+        for (var i = 1; i < worldCorners.Length; i++)
+        {
+            minPoint.x = Mathf.Min(minPoint.x, worldCorners[i].x);
+            minPoint.y = Mathf.Min(minPoint.y, worldCorners[i].y);
+            maxPoint.x = Mathf.Max(maxPoint.x, worldCorners[i].x);
+            maxPoint.y = Mathf.Max(maxPoint.y, worldCorners[i].y);
+        }
+        
+        return new Rect(
+            minPoint.x,
+            minPoint.y,
+            maxPoint.x - minPoint.x,
+            maxPoint.y - minPoint.y);
     }
 
     private static void LogFileDetails(StringBuilder stringBuilder, string fieldName, string fieldFilePath, IIosError error)

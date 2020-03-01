@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode
               ipadPopoverPermittedArrowDirections:(UIPopoverArrowDirection)ipadPopoverPermittedArrowDirections
-                            ipadPopoverSourceRect:(CGRect)ipadPopoverSourceRect
+                  ipadNormalizedPopoverSourceRect:(CGRect)ipadNormalizedPopoverSourceRect
                   ipadPopoverCanOverlapSourceRect:(BOOL)ipadPopoverCanOverlapSourceRect;
 
 @end

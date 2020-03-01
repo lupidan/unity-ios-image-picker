@@ -7,8 +7,11 @@ namespace IosImagePicker
     {
         /// <summary>
         /// Use this property to specify the anchor location for the popover on iPad.
+        /// The rect it's represented as values from 0 to 1 in each axes:
+        /// (0,0) being the BOTTOM LEFT corner
+        /// (1,1) being the TOP RIGHT corner
         /// </summary>
-        public readonly Rect IpadPopoverSourceRect;
+        public readonly Rect IpadNormalizedPopoverSourceRect;
         
         /// <summary>
         /// Set this property to the arrow directions that you allow for your popover on iPad.
@@ -21,11 +24,11 @@ namespace IosImagePicker
         public readonly bool IpadPopoverCanOverlapSourceRect;
 
         public IosImagePickerPresentArgs(
-            Rect ipadPopoverSourceRect = default(Rect),
+            Rect ipadNormalizedPopoverSourceRect = default(Rect),
             IosImagePickerPopoverArrowDirection ipadPopoverPermittedArrowDirections = IosImagePickerPopoverArrowDirection.Any,
             bool ipadPopoverCanOverlapSourceRect = false)
         {
-            this.IpadPopoverSourceRect = ipadPopoverSourceRect;
+            this.IpadNormalizedPopoverSourceRect = ipadNormalizedPopoverSourceRect;
             this.IpadPopoverPermittedArrowDirections = ipadPopoverPermittedArrowDirections;
             this.IpadPopoverCanOverlapSourceRect = ipadPopoverCanOverlapSourceRect;
         }

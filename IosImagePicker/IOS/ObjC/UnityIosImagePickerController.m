@@ -42,7 +42,7 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
                                 cameraCaptureMode:(UIImagePickerControllerCameraCaptureMode)cameraCaptureMode
                                         flashMode:(UIImagePickerControllerCameraFlashMode)flashMode
               ipadPopoverPermittedArrowDirections:(UIPopoverArrowDirection)ipadPopoverPermittedArrowDirections
-                            ipadPopoverSourceRect:(CGRect)ipadPopoverSourceRect
+                  ipadNormalizedPopoverSourceRect:(CGRect)ipadNormalizedPopoverSourceRect
                   ipadPopoverCanOverlapSourceRect:(BOOL)ipadPopoverCanOverlapSourceRect
 {
     UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
@@ -68,7 +68,7 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
     {
         [self presentImagePickerController:imagePickerController
        ipadPopoverPermittedArrowDirections:ipadPopoverPermittedArrowDirections
-                     ipadPopoverSourceRect:ipadPopoverSourceRect
+           ipadNormalizedPopoverSourceRect:ipadNormalizedPopoverSourceRect
            ipadPopoverCanOverlapSourceRect:ipadPopoverCanOverlapSourceRect];
     }
     else
@@ -82,7 +82,7 @@ typedef void (*UnityIosImagePickerControllerResultDelegate)(int requestId, const
 
 - (void) presentImagePickerController:(UIImagePickerController *)imagePickerController
   ipadPopoverPermittedArrowDirections:(UIPopoverArrowDirection)ipadPopoverPermittedArrowDirections
-                ipadPopoverSourceRect:(CGRect)ipadPopoverSourceRect
+      ipadNormalizedPopoverSourceRect:(CGRect)ipadNormalizedPopoverSourceRect
       ipadPopoverCanOverlapSourceRect:(BOOL)ipadPopoverCanOverlapSourceRect
 API_AVAILABLE(ios(8.0), macos(13.0))
 {
@@ -93,9 +93,17 @@ API_AVAILABLE(ios(8.0), macos(13.0))
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad &&
         [imagePickerController sourceType] != UIImagePickerControllerSourceTypeCamera)
     {
+        // Transform normalized rect into iOS screen coordinates
+        // It requires to invert the normalized rect
+        CGRect bounds = [[rootViewController view] bounds];
+        CGRect ipadSourceRect = CGRectMake(CGRectGetMinX(ipadNormalizedPopoverSourceRect) * CGRectGetWidth(bounds),
+                                           (1.0f - CGRectGetMaxY(ipadNormalizedPopoverSourceRect)) * CGRectGetHeight(bounds),
+                                           CGRectGetWidth(ipadNormalizedPopoverSourceRect) * CGRectGetWidth(bounds),
+                                           CGRectGetHeight(ipadNormalizedPopoverSourceRect) * CGRectGetHeight(bounds));
+        
         [imagePickerController setModalPresentationStyle:UIModalPresentationPopover];
         [[imagePickerController popoverPresentationController] setPermittedArrowDirections:ipadPopoverPermittedArrowDirections];
-        [[imagePickerController popoverPresentationController] setSourceRect:ipadPopoverSourceRect];
+        [[imagePickerController popoverPresentationController] setSourceRect:ipadSourceRect];
         [[imagePickerController popoverPresentationController] setCanOverlapSourceViewRect:ipadPopoverCanOverlapSourceRect];
         [[imagePickerController popoverPresentationController] setSourceView:[rootViewController view]];
         
@@ -638,15 +646,18 @@ void UnityIosImagePickerController_Present(
     int cameraCaptureMode,
     int cameraFlashMode,
     uint ipadPopoverPermittedArrowDirections,
-    float ipadPopoverSourceRectX,
-    float ipadPopoverSourceRectY,
-    float ipadPopoverSourceRectWidth,
-    float ipadPopoverSourceRectHeight,
+    float ipadNormalizedPopoverSourceRectX,
+    float ipadNormalizedPopoverSourceRectY,
+    float ipadNormalizedPopoverSourceRectWidth,
+    float ipadNormalizedPopoverSourceRectHeight,
     bool ipadPopoverCanOverlapSourceRect)
 {
     NSString *serializedMediaTypesString = [NSString stringWithUTF8String:serializedMediaTypes];
     NSArray <NSString *> *mediaTypes = [serializedMediaTypesString componentsSeparatedByString:@"#"];
-    CGRect popoverSourceRect = CGRectMake(ipadPopoverSourceRectX, ipadPopoverSourceRectY, ipadPopoverSourceRectWidth, ipadPopoverSourceRectHeight);
+    CGRect ipadNormalizedPopoverSourceRect = CGRectMake(ipadNormalizedPopoverSourceRectX,
+                                                        ipadNormalizedPopoverSourceRectY,
+                                                        ipadNormalizedPopoverSourceRectWidth,
+                                                        ipadNormalizedPopoverSourceRectHeight);
     UnityIosImagePickerController *defaultController = [UnityIosImagePickerController defaultController];
     [defaultController presentImagePickerControllerForRequestId:requestId
                                                      sourceType:sourceType
@@ -658,6 +669,6 @@ void UnityIosImagePickerController_Present(
                                               cameraCaptureMode:cameraCaptureMode
                                                       flashMode:cameraFlashMode
                             ipadPopoverPermittedArrowDirections:ipadPopoverPermittedArrowDirections
-                                          ipadPopoverSourceRect:popoverSourceRect
+                                          ipadNormalizedPopoverSourceRect:ipadNormalizedPopoverSourceRect
                                 ipadPopoverCanOverlapSourceRect:ipadPopoverCanOverlapSourceRect ? YES : NO];
 }

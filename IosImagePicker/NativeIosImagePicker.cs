@@ -185,10 +185,10 @@ namespace IosImagePicker
                 this.CameraCaptureMode,
                 this.CameraFlashMode,
                 presentArgs.IpadPopoverPermittedArrowDirections,
-                presentArgs.IpadPopoverSourceRect.x,
-                presentArgs.IpadPopoverSourceRect.y,
-                presentArgs.IpadPopoverSourceRect.width,
-                presentArgs.IpadPopoverSourceRect.height,
+                presentArgs.IpadNormalizedPopoverSourceRect.x,
+                presentArgs.IpadNormalizedPopoverSourceRect.y,
+                presentArgs.IpadNormalizedPopoverSourceRect.width,
+                presentArgs.IpadNormalizedPopoverSourceRect.height,
                 presentArgs.IpadPopoverCanOverlapSourceRect);
 #else
             throw new Exception("Ios Image Picker not supported in this platform");
@@ -331,10 +331,10 @@ namespace IosImagePicker
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraCaptureMode cameraCaptureMode,
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysInt)]IosImagePickerCameraFlashMode cameraFlashMode, 
                 [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.SysUInt)]IosImagePickerPopoverArrowDirection ipadPopoverPermittedArrowDirections,
-                float ipadPopoverSourceRectX, 
-                float ipadPopoverSourceRectY, 
-                float ipadPopoverSourceRectWidth, 
-                float ipadPopoverSourceRectHeight,
+                float ipadNormalizedPopoverSourceRectX, 
+                float ipadNormalizedPopoverSourceRectY, 
+                float ipadNormalizedPopoverSourceRectWidth, 
+                float ipadNormalizedPopoverSourceRectHeight,
                 bool ipadPopoverCanOverlapSourceRect);
         }
 #endif
